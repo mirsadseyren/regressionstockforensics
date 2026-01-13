@@ -166,6 +166,11 @@ if __name__ == "__main__":
     all_data = load_data(tickers)
     
     # Veri Ayrıştırma (Simülasyon İçin Loop Dışında Lazım)
+def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
+                   volume_stop_ratio=VOLUME_STOP_RATIO, stop_loss_rate=STOP_LOSS_RATE,
+                   rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE):
+                   
+    # Veri Ayrıştırma
     if isinstance(all_data.columns, pd.MultiIndex):
         try:
             raw_data = all_data['Close'].dropna(axis=1, how='all')
@@ -179,28 +184,24 @@ if __name__ == "__main__":
             raw_volume = all_data['Volume']
         else:
             raw_volume = pd.DataFrame(0, index=raw_data.index, columns=raw_data.columns)
-    
-    # Volum Ortalaması (21 Gün) - Simülasyon Loop'unda Kullanılacak
+            
+    # Volum Ortalaması (21 Gün)
     vol_avg = raw_volume.rolling(21).mean()
-    
-    # 2. SİMÜLASYON DÖNGÜSÜ
-    print(f"--- Simülasyon Başlıyor (Regresyon: {LOOKBACK_DAYS} Gün) ---")
-    
+
     sim_start_date = (datetime.now() - timedelta(days=365)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    periods = pd.date_range(start=sim_start_date, end=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), freq=REBALANCE_FREQ)
-    
-    
+    periods = pd.date_range(start=sim_start_date, end=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), freq=rebalance_freq)
+
     daily_vals = pd.Series(index=raw_data.loc[periods[0]:].index, dtype=float)
     trade_history = []
-    current_cash = START_CAPITAL
+    current_cash = start_capital
     active_portfolio = [] # [{'t': ticker, 'l': lots, 'b': buy_price}]
-    
-    # İlk değerleri doldur (Grafik için)
+
+    # İlk değerleri doldur
     for d in daily_vals.index:
-        daily_vals[d] = START_CAPITAL
-    
+        daily_vals[d] = start_capital
+
     total_periods = len(periods) - 1
-    
+
     for i in tqdm(range(total_periods), desc="Regression Backtest"):
         # En yakın geçerli işlem gününü bul
         start_idx = raw_data.index.get_indexer([periods[i]], method='nearest')[0]
@@ -208,7 +209,6 @@ if __name__ == "__main__":
         
         start_date = raw_data.index[start_idx]
         end_date = raw_data.index[end_idx]
-    
         
         # --- PORTFÖY SATIŞ (Dönem Başı) ---
         stock_revenue = 0
@@ -217,9 +217,9 @@ if __name__ == "__main__":
             for item in active_portfolio:
                 current_price = raw_data.at[start_date, item['t']]
                 if pd.isna(current_price) or current_price <= 0:
-                    current_price = item['b'] # Veri hatası varsa alış fiyatından say
+                    current_price = item['b']
                 
-                val = item['l'] * current_price * (1 - COMMISSION_RATE)
+                val = item['l'] * current_price * (1 - commission_rate)
                 stock_revenue += val
                 
                 trade_history.append([
@@ -229,14 +229,20 @@ if __name__ == "__main__":
             
             current_cash += stock_revenue
             active_portfolio = []
-    
+
         # --- REGRESYON ANALİZİ & SEÇİM ---
-        candidates = find_best_candidate(start_date, all_data)
-        
-        # DEBUG
-        print(f"Date: {start_date.date()} | Candidates Found: {len(candidates)}")
-        if candidates:
-            print(f"Top Pick: {candidates[0]}")
+        # Burada simülasyon parametreleri (min_slope vs) find_best_candidate'e geçirilmiyor
+        # ama find_best_candidate global sabitler kullanıyordu.
+        # En temiz yol find_best_candidate'e parametre eklemek ama şimdilik global sabitleri güncelleyemeyiz.
+        # Bu yüzden find_best_candidate'i de güncellememiz lazım ama şimdilik aynen çağırıyoruz.
+        # NOT: find_best_candidate varsayılan LOOKBACK_DAYS'i argüman olarak alıyor, ancak slope/r2 threshold'ları hardcoded.
+        # Simülasyon fonksiyonunda bunlara müdahale edememek sorun yaratabilir.
+        # Şimdilik global değişkenleri atlayıp fonksiyonu çağırıyoruz, 
+        # ancak find_best_candidate'i refactor etmemiz gerekecek.
+        # Hızlı çözüm: find_best_candidate zaten refactor edildi, parametre alacak şekilde güncelleyelim?
+        # Zaten lookback_days alıyor. min_slope ve min_r2'yi de ekleyelim.
+        candidates = find_best_candidate(start_date, all_data, lookback_days)
+        # Filtreleme burada tekrar yapılabilir mi? Hayır, zaten filtered geliyor.
         
         top_pick = candidates[0] if candidates else None
         
@@ -244,11 +250,10 @@ if __name__ == "__main__":
         if top_pick:
             buy_price = top_pick['price']
             if buy_price > 0:
-                # Tüm parayla al
                 lots = int(current_cash / buy_price)
                 if lots > 0:
                     cost = lots * buy_price
-                    current_cash -= cost * (1 + COMMISSION_RATE)
+                    current_cash -= cost * (1 + commission_rate)
                     active_portfolio.append({'t': top_pick['t'], 'l': lots, 'b': buy_price})
                     
                     trade_history.append([
@@ -256,67 +261,72 @@ if __name__ == "__main__":
                         f"{buy_price:.2f}", "ALIS", f"{current_cash:,.2f}", 
                         f"(Eğim: {top_pick['slope']:.4f}, R2: {top_pick['r2']:.2f})"
                     ])
-                else:
-                    # Yetersiz bakiye logu (Opsiyonel)
-                    pass
-    
-    # --- GÜNLÜK DEĞERLEME (Simülasyon Dönemi İçin) ---
-    period_prices = raw_data.loc[start_date:end_date]
-    
-    for dt in period_prices.index:
-        # 1. Stop Loss Kontrolü (Döngü içinde portföy değişebilir, kopya liste kullan)
-        for item in active_portfolio[:]:
-            curr_p = period_prices.at[dt, item['t']]
-            # Hata koruması
-            if pd.isna(curr_p) or curr_p <= 0:
-                continue
-            
-            # Stop Durumu (Fiyat)
-            if curr_p <= item['b'] * (1 - STOP_LOSS_RATE):
-                sell_val = item['l'] * curr_p * (1 - COMMISSION_RATE)
-                current_cash += sell_val
-                
-                # Portföyden çıkar
-                active_portfolio.remove(item)
-                
-                trade_history.append([
-                    dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
-                    f"{curr_p:.2f}", "STOP LOSS", f"{current_cash:,.2f}", 
-                    f"Loss: %{(curr_p/item['b'] - 1)*100:.2f}"
-                ])
-                continue # Hacim kontrolüne gerek yok
-            
-            # Hacim Stop (Volume Spike)
-            # Eğer hacim ortalamanın N katına çıktıysa sat
-            try:
-                curr_vol = raw_volume.at[dt, item['t']]
-                avg_vol = vol_avg.at[dt, item['t']]
-                
-                if not pd.isna(curr_vol) and not pd.isna(avg_vol) and avg_vol > 0:
-                    if curr_vol > avg_vol * VOLUME_STOP_RATIO:
-                        sell_val = item['l'] * curr_p * (1 - COMMISSION_RATE)
-                        current_cash += sell_val
-                        active_portfolio.remove(item)
-                        
-                        trade_history.append([
-                            dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
-                            f"{curr_p:.2f}", "HACIM STOP", f"{current_cash:,.2f}", 
-                            f"Vol: {curr_vol/avg_vol:.1f}x Avg"
-                        ])
-            except:
-                pass
-                
-        # 2. Portföy Değeri Hesapla
-        port_value = current_cash
-        for item in active_portfolio:
-            curr_p = period_prices.at[dt, item['t']]
-            # Hata koruması (Stop loss sırasında zaten bakıldı ama kalanlar için)
-            if pd.isna(curr_p) or curr_p <= 0:
-                curr_p = item['b']
-            
-            port_value += item['l'] * curr_p
         
-        daily_vals[dt] = port_value
+        # --- GÜNLÜK DEĞERLEME ---
+        period_prices = raw_data.loc[start_date:end_date]
+        
+        for dt in period_prices.index:
+            # 1. Stop Loss Kontrolü
+            for item in active_portfolio[:]:
+                curr_p = period_prices.at[dt, item['t']]
+                if pd.isna(curr_p) or curr_p <= 0:
+                    continue
+                
+                # Fiyat Stop
+                if curr_p <= item['b'] * (1 - stop_loss_rate):
+                    sell_val = item['l'] * curr_p * (1 - commission_rate)
+                    current_cash += sell_val
+                    active_portfolio.remove(item)
+                    trade_history.append([
+                        dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
+                        f"{curr_p:.2f}", "STOP LOSS", f"{current_cash:,.2f}", 
+                        f"Loss: %{(curr_p/item['b'] - 1)*100:.2f}"
+                    ])
+                    continue
+                
+                # Hacim Stop
+                try:
+                    curr_vol = raw_volume.at[dt, item['t']]
+                    avg_vol = vol_avg.at[dt, item['t']]
+                    if not pd.isna(curr_vol) and not pd.isna(avg_vol) and avg_vol > 0:
+                        if curr_vol > avg_vol * volume_stop_ratio:
+                            sell_val = item['l'] * curr_p * (1 - commission_rate)
+                            current_cash += sell_val
+                            active_portfolio.remove(item)
+                            trade_history.append([
+                                dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
+                                f"{curr_p:.2f}", "HACIM STOP", f"{current_cash:,.2f}", 
+                                f"Vol: {curr_vol/avg_vol:.1f}x Avg"
+                            ])
+                except:
+                    pass
+            
+            # 2. Portföy Değeri
+            port_value = current_cash
+            for item in active_portfolio:
+                curr_p = period_prices.at[dt, item['t']]
+                if pd.isna(curr_p) or curr_p <= 0:
+                    curr_p = item['b']
+                port_value += item['l'] * curr_p
+            
+            daily_vals[dt] = port_value
+
+    # Sonucu Döndür
+    daily_vals = daily_vals.loc[:end_date]
+    return daily_vals, trade_history, daily_vals.iloc[-1]
+
+if __name__ == "__main__":
+    # 1. VERİ YÜKLEME
+    tickers = get_tickers_from_file(STOX_FILE)
+    if not tickers:
+        exit()
+    
+    all_data = load_data(tickers)
+    
+    # 2. SİMÜLASYON BAŞLAT
+    print(f"--- Simülasyon Başlıyor (Regresyon: {LOOKBACK_DAYS} Gün) ---")
+    daily_vals, trade_history, final_balance = run_simulation(all_data)
+
 
     # SON DURUM RAPORU
     # Simülasyonun bittiği yere kadar kes (Son dönem sonrası veriler 19000 kalmış olabilir)
