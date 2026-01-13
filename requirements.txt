@@ -5,3 +5,5 @@ matplotlib
 scipy
 tqdm
 openpyxl
+streamlit
+plotly
