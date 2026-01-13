@@ -1,1 +1,1 @@
-mirsadregressionstockforensics.streamlit.app
+https://mirsadregressionstockforensics.streamlit.app
