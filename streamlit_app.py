@@ -9,6 +9,7 @@ from scipy.stats import linregress
 # Import from regression.py
 from regression import (
     load_data, get_tickers_from_file, find_best_candidate, run_simulation,
+    get_vectorized_metrics,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
     VOLUME_STOP_RATIO, STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
     MAX_ATR_PERCENT
@@ -44,6 +45,15 @@ if all_data is None:
     st.error(f"{STOX_FILE} bulunamadı veya hisse yok!")
     st.stop()
 
+# --- METRİK HESAPLAMA (Vektörize) ---
+@st.cache_data(ttl=3600) # 1 saat cache
+def get_metrics(_data, _lookback):
+    return get_vectorized_metrics(_data, _lookback)
+
+with st.spinner("Metrikler hesaplanıyor..."):
+    # lookback_days değişirse burası tetiklenir
+    precalc = get_metrics(all_data, lookback_days)
+
 # --- TABLAR ---
 tab1, tab2, tab3, tab4 = st.tabs(["🔍 Günlük Tarama", "📈 Simülasyon Backtest", "📊 Hisse Analizi", "📅 Fırsat Zaman Çizelgesi"])
 
@@ -65,22 +75,18 @@ with tab1:
         target_date = last_date - timedelta(days=date_gap)
         st.info(f"Analiz Tarihi: {target_date.date()}")
         
-        # Regression.py'deki find_best_candidate fonksiyonunu çağırıyoruz
-        # Not: find_best_candidate min_slope ve min_r2'yi global'den alıyor.
-        # Streamlit parametrelerini oraya geçirmek için fonksiyonu güncellememiz gerekirdi.
-        # Şimdilik global'deki varsayılanları kullanıyor.
-        candidates = find_best_candidate(target_date, all_data, lookback_days, max_atr_percent=atr_limit)
+        candidates = find_best_candidate(
+            target_date, 
+            all_data, 
+            lookback_days=lookback_days, 
+            max_atr_percent=atr_limit,
+            min_slope=min_slope,
+            min_r2=min_r2,
+            precalc=precalc
+        )
         
-        # Filtreleme (Global parametreleri ezmek için burada tekrar filtreleyebiliriz ama 
-        # find_best_candidate içinde zaten bir filtre var. En temizi fonksiyonu güncellemekti.)
-        # Şimdilik dönen adayları buradaki parametrelere göre tekrar süzelim:
-        if candidates:
-            filtered_candidates = [
-                c for c in candidates 
-                if c['slope'] >= min_slope and c['r2'] >= min_r2
-            ]
-        else:
-            filtered_candidates = []
+        # Filtreleme find_best_candidate içinde yapıldığı için filtered_candidates direkt candidates olur
+        filtered_candidates = candidates if candidates else []
         
         st.write(f"Bulunan Aday: {len(filtered_candidates)}")
         
@@ -277,21 +283,23 @@ with tab4:
                 current_date, 
                 all_data, 
                 lookback_days=lookback_days, 
-                max_atr_percent=atr_limit
+                max_atr_percent=atr_limit,
+                min_slope=min_slope,
+                min_r2=min_r2,
+                precalc=precalc
             )
             
-            # Filtreleme (Streamlit'teki ek parametreler: slope ve r2)
+            # Filtreleme (İçeride yapıldığı için direkt ekliyoruz)
             if candidates:
                 for c in candidates:
-                    if c['slope'] >= min_slope and c['r2'] >= min_r2:
-                        opportunities.append({
-                            'Date': current_date,
-                            'Ticker': c['t'].replace('.IS', ''),
-                            'Price': c['price'],
-                            'Slope': c['slope'],
-                            'R2': c['r2'],
-                            'Score': c['score']
-                        })
+                    opportunities.append({
+                        'Date': current_date,
+                        'Ticker': c['t'].replace('.IS', ''),
+                        'Price': c['price'],
+                        'Slope': c['slope'],
+                        'R2': c['r2'],
+                        'Score': c['score']
+                    })
             
             progress_bar.progress((idx + 1) / len(scan_dates))
         
