@@ -10,7 +10,8 @@ from scipy.stats import linregress
 from regression import (
     load_data, get_tickers_from_file, find_best_candidate, run_simulation,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
-    VOLUME_STOP_RATIO, STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE
+    VOLUME_STOP_RATIO, STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
+    MAX_ATR_PERCENT
 )
 
 st.set_page_config(page_title="Regression Bot Dashboard", layout="wide")
@@ -20,12 +21,12 @@ st.title("🚀 Momentum Regression Bot")
 # --- SIDEBAR: Ayarlar ---
 st.sidebar.header("⚙️ Strateji Parametreleri")
 
-lookback_days = st.sidebar.number_input("Lookback Days", min_value=10, max_value=200, value=LOOKBACK_DAYS)
-min_slope = st.sidebar.number_input("Min Slope (Eğim)", min_value=0.0001, max_value=0.1, value=MIN_SLOPE, format="%.4f")
-min_r2 = st.sidebar.number_input("Min R-Squared", min_value=0.1, max_value=1.0, value=MIN_R_SQUARED)
-stop_loss = st.sidebar.number_input("Stop Loss Rate", min_value=0.01, max_value=0.5, value=STOP_LOSS_RATE)
-vol_stop_ratio = st.sidebar.number_input("Volume Stop Ratio", min_value=1.0, max_value=10.0, value=VOLUME_STOP_RATIO)
-atr_filter = st.sidebar.checkbox("ATR Filtresi (10%)", value=True) # regression.py'de hardcoded MAX_ATR_PERCENT var ama fonksiyona eklemedik henüz
+lookback_days = st.sidebar.number_input("Lookback Days", value=LOOKBACK_DAYS)
+min_slope = st.sidebar.number_input("Min Slope (Eğim)", value=MIN_SLOPE, format="%.4f")
+min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
+stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
+vol_stop_ratio = st.sidebar.number_input("Volume Stop Ratio", value=VOLUME_STOP_RATIO)
+atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
 
 # --- VERİ YÜKLEME ---
 @st.cache_data(ttl=3600*12) # 12 saat cache
@@ -51,7 +52,7 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        date_gap = st.number_input("Geriye Dönük Gün (0 = Bugün)", min_value=0, max_value=30, value=0)
+        date_gap = st.number_input("Geriye Dönük Gün (0 = Bugün)", min_value=0, value=0)
     
     if st.button("Taramayı Başlat"):
         # Son tarihi bul
@@ -67,7 +68,7 @@ with tab1:
         # Not: find_best_candidate min_slope ve min_r2'yi global'den alıyor.
         # Streamlit parametrelerini oraya geçirmek için fonksiyonu güncellememiz gerekirdi.
         # Şimdilik global'deki varsayılanları kullanıyor.
-        candidates = find_best_candidate(target_date, all_data, lookback_days)
+        candidates = find_best_candidate(target_date, all_data, lookback_days, max_atr_percent=atr_limit)
         
         # Filtreleme (Global parametreleri ezmek için burada tekrar filtreleyebiliriz ama 
         # find_best_candidate içinde zaten bir filtre var. En temizi fonksiyonu güncellemekti.)
@@ -115,7 +116,8 @@ with tab2:
                 min_r2=min_r2,       # run_simulation içinde henüz kullanılmıyor (TODO)
                 stop_loss_rate=stop_loss,
                 volume_stop_ratio=vol_stop_ratio,
-                start_capital=START_CAPITAL
+                start_capital=START_CAPITAL,
+                max_atr_percent=atr_limit
             )
             
             roi = ((final_bal - START_CAPITAL) / START_CAPITAL) * 100

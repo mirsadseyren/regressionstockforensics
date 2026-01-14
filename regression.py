@@ -47,7 +47,7 @@ def load_data(tickers):
     data.to_pickle(DATA_CACHE_FILE)
     return data
 
-def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS):
+def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT):
     # Veri Hazırlığı
     if isinstance(all_data.columns, pd.MultiIndex):
         try:
@@ -109,7 +109,7 @@ def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS):
             atr_pct = atr / last_price
             
             # Aşırı oynaksa ele (Kara Liste)
-            if atr_pct > MAX_ATR_PERCENT:
+            if atr_pct > max_atr_percent:
                 continue
                 
         except:
@@ -168,7 +168,8 @@ if __name__ == "__main__":
     # Veri Ayrıştırma (Simülasyon İçin Loop Dışında Lazım)
 def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
                    volume_stop_ratio=VOLUME_STOP_RATIO, stop_loss_rate=STOP_LOSS_RATE,
-                   rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE):
+                   rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE,
+                   max_atr_percent=MAX_ATR_PERCENT):
                    
     # Veri Ayrıştırma
     if isinstance(all_data.columns, pd.MultiIndex):
@@ -241,7 +242,7 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
         # ancak find_best_candidate'i refactor etmemiz gerekecek.
         # Hızlı çözüm: find_best_candidate zaten refactor edildi, parametre alacak şekilde güncelleyelim?
         # Zaten lookback_days alıyor. min_slope ve min_r2'yi de ekleyelim.
-        candidates = find_best_candidate(start_date, all_data, lookback_days)
+        candidates = find_best_candidate(start_date, all_data, lookback_days, max_atr_percent)
         # Filtreleme burada tekrar yapılabilir mi? Hayır, zaten filtered geliyor.
         
         top_pick = candidates[0] if candidates else None
@@ -254,7 +255,7 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 if lots > 0:
                     cost = lots * buy_price
                     current_cash -= cost * (1 + commission_rate)
-                    active_portfolio.append({'t': top_pick['t'], 'l': lots, 'b': buy_price})
+                    active_portfolio.append({'t': top_pick['t'], 'l': lots, 'b': buy_price, 'max_p': buy_price})
                     
                     trade_history.append([
                         start_date.strftime('%Y-%m-%d'), top_pick['t'].replace('.IS',''), lots,
@@ -272,15 +273,19 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 if pd.isna(curr_p) or curr_p <= 0:
                     continue
                 
-                # Fiyat Stop
-                if curr_p <= item['b'] * (1 - stop_loss_rate):
+                # Max Fiyat Güncelleme (Trailing Stop İçin)
+                if curr_p > item['max_p']:
+                    item['max_p'] = curr_p
+
+                # Fiyat Stop (Trailing Stop: Max fiyattan %X düşerse sat)
+                if curr_p <= item['max_p'] * (1 - stop_loss_rate):
                     sell_val = item['l'] * curr_p * (1 - commission_rate)
                     current_cash += sell_val
                     active_portfolio.remove(item)
                     trade_history.append([
                         dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
                         f"{curr_p:.2f}", "STOP LOSS", f"{current_cash:,.2f}", 
-                        f"Loss: %{(curr_p/item['b'] - 1)*100:.2f}"
+                        f"Drop: %{(curr_p/item['max_p'] - 1)*100:.2f} | Peak: {item['max_p']:.2f}"
                     ])
                     continue
                 
@@ -330,7 +335,7 @@ if __name__ == "__main__":
 
     # SON DURUM RAPORU
     # Simülasyonun bittiği yere kadar kes (Son dönem sonrası veriler 19000 kalmış olabilir)
-    daily_vals = daily_vals.loc[:end_date]
+    # daily_vals = daily_vals.loc[:end_date]  <-- REMOVED: end_date is undefined here and daily_vals is already sliced inside run_simulation
     
     final_balance = daily_vals.iloc[-1]
     roi = ((final_balance - START_CAPITAL) / START_CAPITAL) * 100
