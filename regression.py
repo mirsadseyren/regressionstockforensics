@@ -48,10 +48,42 @@ def load_data(tickers, force_refresh=False):
                 print("Güncel veriler cache'den yüklendi.")
                 return data
     
-    print("Yeni veriler indiriliyor (yfinance - dünün kapanışına kadar)...")
+    print("Yeni veriler indiriliyor (yfinance)...")
     data = yf.download(tickers, start=download_start, auto_adjust=True)
+    
     if not data.empty:
+        # Hatalı/Eksik hisseleri tespit et
+        if isinstance(data.columns, pd.MultiIndex):
+            closes = data['Close']
+        else:
+            closes = data
+            
+        # Tüm sütunları NaN olan veya hiç inmeyen hisseleri bul
+        downloaded_tickers = closes.columns.tolist()
+        failed_tickers = [t for t in tickers if t not in downloaded_tickers or closes[t].isna().all()]
+        
+        if failed_tickers:
+            print(f"\n{len(failed_tickers)} hisse indirilemedi, tek tek deneniyor...")
+            for t in tqdm(failed_tickers, desc="Eksik veriler tamamlanıyor"):
+                try:
+                    # Tekli indirme (threads=False daha stabil)
+                    t_data = yf.download(t, start=download_start, auto_adjust=True, progress=False, threads=False)
+                    if not t_data.empty:
+                        if isinstance(data.columns, pd.MultiIndex):
+                            # MultiIndex yapısına uygun şekilde ekle
+                            for col in ['Close', 'Open', 'High', 'Low', 'Volume']:
+                                if col in t_data.columns:
+                                    data.loc[:, (col, t)] = t_data[col]
+                        else:
+                            data[t] = t_data['Close']
+                except Exception as e:
+                    # print(f"{t} hata: {e}")
+                    pass
+        
+        # Sonuçları kaydet
+        data.sort_index(axis=1, inplace=True)
         data.to_pickle(DATA_CACHE_FILE)
+    
     return data
 
 def get_vectorized_metrics(all_data, lookback_days):
