@@ -27,6 +27,7 @@ min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
 stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
 vol_stop_ratio = st.sidebar.number_input("Volume Stop Ratio", value=VOLUME_STOP_RATIO)
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
+start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
 # --- VERİ YÜKLEME ---
 @st.cache_data(ttl=3600*12) # 12 saat cache
@@ -116,21 +117,21 @@ with tab2:
                 min_r2=min_r2,       # run_simulation içinde henüz kullanılmıyor (TODO)
                 stop_loss_rate=stop_loss,
                 volume_stop_ratio=vol_stop_ratio,
-                start_capital=START_CAPITAL,
+                start_capital=start_capital,
                 max_atr_percent=atr_limit
             )
             
-            roi = ((final_bal - START_CAPITAL) / START_CAPITAL) * 100
+            roi = ((final_bal - start_capital) / start_capital) * 100
             
             c1, c2, c3 = st.columns(3)
-            c1.metric("Başlangıç", f"{START_CAPITAL:,.0f} TL")
+            c1.metric("Başlangıç", f"{start_capital:,.0f} TL")
             c2.metric("Bitiş", f"{final_bal:,.0f} TL")
             c3.metric("Getiri (ROI)", f"%{roi:.2f}", delta_color="normal")
             
             # Grafik
             fig = go.Figure()
             fig.add_trace(go.Scatter(x=daily_vals.index, y=daily_vals.values, mode='lines', name='Portföy Değeri'))
-            fig.add_trace(go.Scatter(x=daily_vals.index, y=[START_CAPITAL]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
+            fig.add_trace(go.Scatter(x=daily_vals.index, y=[start_capital]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
             fig.update_layout(title="Portföy Gelişimi", xaxis_title="Tarih", yaxis_title="TL")
             st.plotly_chart(fig, use_container_width=True)
             
