@@ -87,16 +87,19 @@ with tab1:
             
             # Formatlama
             df_display = df_candidates[['Ticker', 'price', 'slope', 'r2', 'score', 'vol_curr', 'vol_avg']].copy()
-            df_display.columns = ['Ticker', 'Fiyat', 'Eğim', 'R2', 'Skor', 'Hacim', 'Ort. Hacim']
+            df_display.columns = ['Ticker', 'Fiyat', 'Eğim', 'R2', 'Alım Fırsatı (%)', 'Hacim', 'Ort. Hacim']
+            
+            # Alım Fırsatını yüzdelik yap
+            df_display['Alım Fırsatı (%)'] = df_display['Alım Fırsatı (%)'] * 100
             
             st.dataframe(df_display.style.format({
                 'Fiyat': "{:.2f}",
                 'Eğim': "{:.4f}",
                 'R2': "{:.2f}",
-                'Skor': "{:.4f}",
+                'Alım Fırsatı (%)': "{:.2f}%",
                 'Hacim': "{:,.0f}",
                 'Ort. Hacim': "{:,.0f}"
-            }))
+            }).background_gradient(subset=['Alım Fırsatı (%)'], cmap='RdYlGn'))
             
             st.success(f"🎯 En İyi Seçim: **{filtered_candidates[0]['t']}**")
         else:

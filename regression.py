@@ -128,8 +128,16 @@ def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_
             # R_squared = r_value ** 2 (Uyum kalitesi)
             
             if slope > MIN_SLOPE and (r_value ** 2) > MIN_R_SQUARED:
-                # Score: Slope * R^2 (Hem hızlı hem düzenli büyüyenleri ödüllendir)
-                score = slope * (r_value ** 2)
+                # Beklenen Fiyat (Exponential: y = exp(intercept + slope * x))
+                expected_log_price = intercept + slope * (len(y) - 1)
+                expected_price = np.exp(expected_log_price)
+                current_price = series.iloc[-1]
+                
+                # İskonto Oranı: (Beklenen - Aktüel) / Beklenen
+                discount = (expected_price - current_price) / expected_price
+                
+                # Score: Yeni kurala göre discount (negatif olabilir, ama biz pozitif discountları arıyoruz)
+                score = discount
                 
                 # Volume Stats
                 try:
