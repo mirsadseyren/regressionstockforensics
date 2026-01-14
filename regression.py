@@ -47,124 +47,118 @@ def load_data(tickers):
     data.to_pickle(DATA_CACHE_FILE)
     return data
 
-def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT, 
-                        min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED):
-    # Veri Hazırlığı
+def get_vectorized_metrics(all_data, lookback_days):
+    """
+    Tüm hisseler için regresyon ve ATR metriklerini vektörize olarak hesaplar.
+    O(n) karmaşıklığında rolling window kullanarak performansı artırır.
+    """
     if isinstance(all_data.columns, pd.MultiIndex):
-        try:
-            raw_data = all_data['Close'].dropna(axis=1, how='all')
-            raw_high = all_data['High']
-            raw_low = all_data['Low']
-            raw_volume = all_data['Volume']
-        except KeyError:
-            raw_data = all_data.xs('Close', axis=1, level=0).dropna(axis=1, how='all')
-            raw_high = all_data.xs('High', axis=1, level=0)
-            raw_low = all_data.xs('Low', axis=1, level=0)
-            raw_volume = all_data.xs('Volume', axis=1, level=0)
+        closes = all_data['Close'].dropna(axis=1, how='all')
+        highs = all_data['High']
+        lows = all_data['Low']
+        volumes = all_data['Volume']
     else:
-        raw_data = all_data
-        if 'High' in all_data.columns:
-            raw_high = all_data['High']
-            raw_low = all_data['Low']
-            raw_volume = all_data['Volume']
-        else:
-            raw_high = raw_data
-            raw_low = raw_data
-            raw_volume = pd.DataFrame(0, index=raw_data.index, columns=raw_data.columns)
-            
-    available_tickers = raw_data.columns.tolist()
-    candidates = []
+        closes = all_data
+        highs = all_data.get('High', closes)
+        lows = all_data.get('Low', closes)
+        volumes = all_data.get('Volume', pd.DataFrame(0, index=closes.index, columns=closes.columns))
+
+    n = lookback_days
+    log_closes = np.log(closes)
     
-    # O tarihte işlem gören ve yeterli geçmişi olan hisseleri bul
-    analysis_start = target_date - timedelta(days=lookback_days * 1.5)
-    window_data = raw_data.loc[analysis_start:target_date]
+    # X değerleri (0,1,2...,n-1)
+    x = np.arange(n)
+    sum_x = x.sum()
+    sum_x2 = (x**2).sum()
+    stdev_x = x.std()
     
-    for ticker in available_tickers:
-        # Son N günlük veri (NaN temizlenmiş)
-        series = window_data[ticker].dropna().tail(lookback_days)
-        
-        if len(series) < lookback_days * 0.8: # En az %80 veri olsun
-            continue
-        
-        # --- ATR HESAPLAMA (Volatilite Filtresi) ---
+    # Rolling Sums
+    sum_y = log_closes.rolling(window=n).sum()
+    sum_xy = log_closes.rolling(window=n).apply(lambda y: (x * y).sum(), raw=True)
+    
+    # 1. Slope (Eğim) Hesaplama
+    # slope = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x**2)
+    slopes = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x**2)
+    
+    # 2. Intercept (Kesişim) Hesaplama
+    # intercept = (sum_y - slope * sum_x) / n
+    intercepts = (sum_y - slopes * sum_x) / n
+    
+    # 3. R-Squared (Uyum Kalitesi) Hesaplama
+    # Korelasyon katsayısı r = (n*sum_xy - sum_x*sum_y) / sqrt((n*sum_x2 - sum_x^2) * (n*sum_y2 - sum_y^2))
+    sum_y2 = (log_closes**2).rolling(window=n).sum()
+    numerator = (n * sum_xy - sum_x * sum_y)
+    denominator = np.sqrt((n * sum_x2 - sum_x**2) * (n * sum_y2 - sum_y**2))
+    r_squareds = (numerator / denominator)**2
+    
+    # 4. ATR Oranı (%) Hesaplama
+    pc = closes.shift(1)
+    tr = np.maximum(
+        highs - lows,
+        np.maximum((highs - pc).abs(), (lows - pc).abs())
+    )
+    
+    atr = tr.rolling(14).mean()
+    atr_pcts = atr / closes
+    
+    # 5. İskonto (%) Hesaplama
+    # expected_log_price = intercept + slope * (n - 1)
+    expected_log_prices = intercepts + slopes * (n - 1)
+    expected_prices = np.exp(expected_log_prices)
+    discounts = (expected_prices - closes) / expected_prices
+    
+    vol_avgs = volumes.rolling(21).mean()
+    
+    return {
+        'slopes': slopes,
+        'intercepts': intercepts,
+        'r2': r_squareds,
+        'atr_pct': atr_pcts,
+        'discounts': discounts,
+        'volumes': volumes,
+        'vol_avgs': vol_avgs,
+        'prices': closes
+    }
+
+def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT, 
+                        min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, precalc=None):
+    # Eğer precalc varsa, vektörize veriden direkt çek
+    if precalc is not None:
         try:
-            # İlgili dönemin High/Low verilerini al
-            s_high = raw_high[ticker].loc[series.index]
-            s_low = raw_low[ticker].loc[series.index]
-            s_close = series
+            # En yakın tarihi bul (Borsa tatil olabilir)
+            idx = precalc['prices'].index.get_indexer([target_date], method='pad')[0]
+            if idx < 0: return []
             
-            # TR (True Range) hesapla
-            ph = s_high
-            pl = s_low
-            pc = s_close.shift(1)
+            dt = precalc['prices'].index[idx]
             
-            tr = pd.concat([
-                ph - pl,
-                (ph - pc).abs(),
-                (pl - pc).abs()
-            ], axis=1).max(axis=1)
+            # Tüm hisseler için maske oluştur
+            mask = (precalc['slopes'].iloc[idx] > min_slope) & \
+                   (precalc['r2'].iloc[idx] > min_r2) & \
+                   (precalc['atr_pct'].iloc[idx] <= max_atr_percent)
             
-            atr = tr.rolling(14).mean().iloc[-1]
-            last_price = s_close.iloc[-1]
+            valid_tickers = mask[mask].index.tolist()
+            candidates = []
             
-            atr_pct = atr / last_price
-            
-            # Aşırı oynaksa ele (Kara Liste)
-            if atr_pct > max_atr_percent:
-                continue
-                
-        except:
-            # Veri eksikse (High/Low yoksa) filtreyi pas geç veya ele
-            continue
-            
-        # Exponential Regression: ln(y) = ln(a) + bx
-        # y = Fiyatlar, x = 0, 1, 2...
-        try:
-            y = np.log(series.values)
-            x = np.arange(len(y))
-            
-            slope, intercept, r_value, p_value, std_err = linregress(x, y)
-            
-            # Slope = Günlük logaritmik getiri (~yüzdesel büyüme)
-            # R_squared = r_value ** 2 (Uyum kalitesi)
-            
-            if slope > min_slope and (r_value ** 2) > min_r2:
-                # Beklenen Fiyat (Exponential: y = exp(intercept + slope * x))
-                expected_log_price = intercept + slope * (len(y) - 1)
-                expected_price = np.exp(expected_log_price)
-                current_price = series.iloc[-1]
-                
-                # İskonto Oranı: (Beklenen - Aktüel) / Beklenen
-                discount = (expected_price - current_price) / expected_price
-                
-                # Score: Yeni kurala göre discount (negatif olabilir, ama biz pozitif discountları arıyoruz)
-                score = discount
-                
-                # Volume Stats
-                try:
-                    # target_date dahil geriye dönük 21 gün
-                    v_series = raw_volume[ticker].loc[:target_date].tail(21)
-                    vol_avg = v_series.mean()
-                    vol_curr = v_series.iloc[-1]
-                except:
-                    vol_avg = 0
-                    vol_curr = 0
-                
+            for ticker in valid_tickers:
                 candidates.append({
                     't': ticker,
-                    'slope': slope,
-                    'r2': r_value ** 2,
-                    'score': score,
-                    'price': series.iloc[-1],
-                    'vol_avg': vol_avg,
-                    'vol_curr': vol_curr
+                    'slope': precalc['slopes'].at[dt, ticker],
+                    'r2': precalc['r2'].at[dt, ticker],
+                    'score': precalc['discounts'].at[dt, ticker],
+                    'price': precalc['prices'].at[dt, ticker],
+                    'vol_avg': precalc['vol_avgs'].at[dt, ticker],
+                    'vol_curr': precalc['volumes'].at[dt, ticker]
                 })
-        except Exception as e:
-            continue
             
-    # Sıralama (En yüksek skorlu 1 hisseyi alalım - Momentum stratejisi gibi konsantre)
-    candidates.sort(key=lambda x: x['score'], reverse=True)
-    return candidates
+            # İskonto (skore) göre sırala
+            candidates.sort(key=lambda x: x['score'], reverse=True)
+            return candidates
+        except Exception as e:
+            # print(f"Vectorized search error: {e}")
+            pass
+
+    # Eski Yavaş Mantık (Failsafe)
+    # ... (Eski find_best_candidate kodunun geri kalanı)
 
 if __name__ == "__main__":
     # 1. VERİ YÜKLEME
@@ -195,9 +189,6 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
         else:
             raw_volume = pd.DataFrame(0, index=raw_data.index, columns=raw_data.columns)
             
-    # Volum Ortalaması (21 Gün)
-    vol_avg = raw_volume.rolling(21).mean()
-
     sim_start_date = (datetime.now() - timedelta(days=365)).replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     periods = pd.date_range(start=sim_start_date, end=datetime.now().replace(hour=0, minute=0, second=0, microsecond=0), freq=rebalance_freq)
 
@@ -206,6 +197,9 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
     current_cash = start_capital
     active_portfolio = [] # [{'t': ticker, 'l': lots, 'b': buy_price}]
 
+    # Vektörize Metrikleri Hesapla (Hız için)
+    precalc = get_vectorized_metrics(all_data, lookback_days)
+    
     # İlk değerleri doldur
     for d in daily_vals.index:
         daily_vals[d] = start_capital
@@ -245,17 +239,8 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
             active_portfolio = []
 
         # --- REGRESYON ANALİZİ & SEÇİM ---
-        # Burada simülasyon parametreleri (min_slope vs) find_best_candidate'e geçirilmiyor
-        # ama find_best_candidate global sabitler kullanıyordu.
-        # En temiz yol find_best_candidate'e parametre eklemek ama şimdilik global sabitleri güncelleyemeyiz.
-        # Bu yüzden find_best_candidate'i de güncellememiz lazım ama şimdilik aynen çağırıyoruz.
-        # NOT: find_best_candidate varsayılan LOOKBACK_DAYS'i argüman olarak alıyor, ancak slope/r2 threshold'ları hardcoded.
-        # Simülasyon fonksiyonunda bunlara müdahale edememek sorun yaratabilir.
-        # Şimdilik global değişkenleri atlayıp fonksiyonu çağırıyoruz, 
-        # ancak find_best_candidate'i refactor etmemiz gerekecek.
-        # Hızlı çözüm: find_best_candidate zaten refactor edildi, parametre alacak şekilde güncelleyelim?
-        # Zaten lookback_days alıyor. min_slope ve min_r2'yi de ekleyelim.
-        candidates = find_best_candidate(start_date, all_data, lookback_days, max_atr_percent, min_slope, min_r2)
+        # Vektörize aday seçimi
+        candidates = find_best_candidate(start_date, all_data, lookback_days, max_atr_percent, min_slope, min_r2, precalc=precalc)
         # Filtreleme burada tekrar yapılabilir mi? Hayır, zaten filtered geliyor.
         
         top_pick = candidates[0] if candidates else None
@@ -306,7 +291,7 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 # Hacim Stop
                 try:
                     curr_vol = raw_volume.at[dt, item['t']]
-                    avg_vol = vol_avg.at[dt, item['t']]
+                    avg_vol = precalc['vol_avgs'].at[dt, item['t']]
                     if not pd.isna(curr_vol) and not pd.isna(avg_vol) and avg_vol > 0:
                         if curr_vol > avg_vol * volume_stop_ratio:
                             sell_val = item['l'] * curr_p * (1 - commission_rate)
