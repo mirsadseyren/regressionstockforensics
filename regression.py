@@ -33,18 +33,25 @@ def get_tickers_from_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as f:
         return [t.strip().upper() + ".IS" for t in f.read().splitlines() if t.strip()]
 
-def load_data(tickers):
+def load_data(tickers, force_refresh=False):
     sim_start = (datetime.now() - timedelta(days=365)).replace(day=1)
     download_start = (sim_start - timedelta(days=400)).strftime('%Y-%m-%d')
     
-    if os.path.exists(DATA_CACHE_FILE):
-        data = pd.read_pickle(DATA_CACHE_FILE)
-        if hasattr(data, 'columns') and 'Volume' in data.columns:
-            return data
+    cache_exists = os.path.exists(DATA_CACHE_FILE)
+    if cache_exists and not force_refresh:
+        # Cache dosyasının son değiştirilme tarihini kontrol et
+        mtime = datetime.fromtimestamp(os.path.getmtime(DATA_CACHE_FILE))
+        # Eğer bugün güncellendiyse cache'den yükle
+        if mtime.date() == datetime.now().date():
+            data = pd.read_pickle(DATA_CACHE_FILE)
+            if hasattr(data, 'columns') and 'Volume' in data.columns:
+                print("Güncel veriler cache'den yüklendi.")
+                return data
     
-    print("Veriler indiriliyor (Close + Volume)...")
+    print("Yeni veriler indiriliyor (yfinance - dünün kapanışına kadar)...")
     data = yf.download(tickers, start=download_start, auto_adjust=True)
-    data.to_pickle(DATA_CACHE_FILE)
+    if not data.empty:
+        data.to_pickle(DATA_CACHE_FILE)
     return data
 
 def get_vectorized_metrics(all_data, lookback_days):
