@@ -48,7 +48,7 @@ def load_data(tickers, force_refresh=False):
                 print("Güncel veriler cache'den yüklendi.")
                 return data
     
-    print("Yeni veriler indiriliyor (yfinance)...")
+    print(f"Yeni veriler indiriliyor (yfinance)... {'(Force Refresh)' if force_refresh else ''}")
     data = yf.download(tickers, start=download_start, auto_adjust=True)
     
     if not data.empty:
@@ -84,6 +84,36 @@ def load_data(tickers, force_refresh=False):
         data.sort_index(axis=1, inplace=True)
         data.to_pickle(DATA_CACHE_FILE)
     
+    return data
+
+def get_clean_data(data):
+    """
+    Verideki terminal NaN satırlarını temizler.
+    Eğer son satırda çok fazla NaN varsa, o satırı siler.
+    """
+    if data is None or data.empty:
+        return data
+    
+    if isinstance(data.columns, pd.MultiIndex):
+        closes = data['Close']
+    else:
+        closes = data
+        
+    # Son satırdaki NaN oranını kontrol et
+    while not closes.empty:
+        last_row_nans = closes.iloc[-1].isna().sum()
+        total_cols = len(closes.columns)
+        
+        # Eğer %50'den fazlası NaN ise bu satırı geçersiz say (örün market henüz açılmamış veya veri eksik)
+        if last_row_nans > total_cols * 0.5:
+            data = data.iloc[:-1]
+            if isinstance(data.columns, pd.MultiIndex):
+                closes = data['Close']
+            else:
+                closes = data
+        else:
+            break
+            
     return data
 
 def get_vectorized_metrics(all_data, lookback_days):

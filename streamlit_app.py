@@ -9,7 +9,7 @@ from scipy.stats import linregress
 # Import from regression.py
 from regression import (
     load_data, get_tickers_from_file, find_best_candidate, run_simulation,
-    get_vectorized_metrics,
+    get_vectorized_metrics, get_clean_data,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
     VOLUME_STOP_RATIO, STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
     MAX_ATR_PERCENT
@@ -31,15 +31,29 @@ atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, fo
 start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
 # --- VERİ YÜKLEME ---
+if 'force_refresh' not in st.session_state:
+    st.session_state.force_refresh = False
+
 @st.cache_data(ttl=3600*12) # 12 saat cache
-def get_data():
+def get_data(force=False):
     tickers = get_tickers_from_file(STOX_FILE)
     if not tickers:
         return None
-    return load_data(tickers)
+    data = load_data(tickers, force_refresh=force)
+    return get_clean_data(data)
+
+# Yan menüye yenileme butonu
+if st.sidebar.button("🔄 Verileri Güncelle"):
+    st.session_state.force_refresh = True
+    st.cache_data.clear()
+    st.rerun()
 
 with st.spinner("Veriler yükleniyor..."):
-    all_data = get_data()
+    # session_state'deki force_refresh'i kullan ve sonra sıfırla
+    is_force = st.session_state.force_refresh
+    all_data = get_data(force=is_force)
+    if is_force:
+        st.session_state.force_refresh = False
 
 if all_data is None:
     st.error(f"{STOX_FILE} bulunamadı veya hisse yok!")
