@@ -178,7 +178,7 @@ if __name__ == "__main__":
 def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
                    volume_stop_ratio=VOLUME_STOP_RATIO, stop_loss_rate=STOP_LOSS_RATE,
                    rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE,
-                   max_atr_percent=MAX_ATR_PERCENT):
+                   max_atr_percent=MAX_ATR_PERCENT, progress_callback=None):
                    
     # Veri Ayrıştırma
     if isinstance(all_data.columns, pd.MultiIndex):
@@ -213,6 +213,8 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
     total_periods = len(periods) - 1
 
     for i in tqdm(range(total_periods), desc="Regression Backtest"):
+        if progress_callback:
+            progress_callback((i + 1) / total_periods)
         # En yakın geçerli işlem gününü bul
         start_idx = raw_data.index.get_indexer([periods[i]], method='nearest')[0]
         end_idx = raw_data.index.get_indexer([periods[i+1]], method='nearest')[0]

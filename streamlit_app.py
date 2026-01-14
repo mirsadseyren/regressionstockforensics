@@ -112,7 +112,11 @@ with tab2:
     
     if st.button("Simülasyonu Çalıştır"):
         with st.spinner("Simülasyon yapılıyor..."):
-            # Parametreleri fonksiyona geçiyoruz
+            # Simülasyonu çalıştır
+            p_bar = st.progress(0)
+            def p_callback(val):
+                p_bar.progress(val)
+
             daily_vals, trade_history, final_bal = run_simulation(
                 all_data, 
                 lookback_days=lookback_days,
@@ -121,8 +125,10 @@ with tab2:
                 stop_loss_rate=stop_loss,
                 volume_stop_ratio=vol_stop_ratio,
                 start_capital=start_capital,
-                max_atr_percent=atr_limit
+                max_atr_percent=atr_limit,
+                progress_callback=p_callback
             )
+            p_bar.empty()
             
             roi = ((final_bal - start_capital) / start_capital) * 100
             
