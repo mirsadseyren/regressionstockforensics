@@ -116,8 +116,8 @@ with tab2:
             daily_vals, trade_history, final_bal = run_simulation(
                 all_data, 
                 lookback_days=lookback_days,
-                min_slope=min_slope, # run_simulation içinde henüz kullanılmıyor (TODO)
-                min_r2=min_r2,       # run_simulation içinde henüz kullanılmıyor (TODO)
+                min_slope=min_slope,
+                min_r2=min_r2,
                 stop_loss_rate=stop_loss,
                 volume_stop_ratio=vol_stop_ratio,
                 start_capital=start_capital,
@@ -142,7 +142,17 @@ with tab2:
             st.subheader("İşlem Geçmişi")
             if trade_history:
                 df_hist = pd.DataFrame(trade_history, columns=["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"])
-                st.dataframe(df_hist)
+                
+                def style_trades(row):
+                    if row['İşlem'] in ['SATIS', 'STOP LOSS']:
+                        info = row['Bilgi']
+                        if 'P/L: %-' in info:
+                            return ['background-color: #f8d7da'] * len(row) # Kırmızı
+                        elif 'P/L: %' in info:
+                            return ['background-color: #d4edda'] * len(row) # Yeşil
+                    return [''] * len(row)
+
+                st.dataframe(df_hist.style.apply(style_trades, axis=1))
             else:
                 st.write("İşlem yok.")
 

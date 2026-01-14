@@ -18,7 +18,7 @@ STOX_FILE = 'stox.txt'
 DATA_CACHE_FILE = 'bist_data_cache.pkl'
 START_CAPITAL = 19000
 COMMISSION_RATE = 0.002
-REBALANCE_FREQ = '2M'  # Monthly
+REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
 LOOKBACK_DAYS = 30  # Regresyon için geriye dönük gün sayısı
 MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.02   # Günlük asgari büyüme hızı
@@ -47,7 +47,8 @@ def load_data(tickers):
     data.to_pickle(DATA_CACHE_FILE)
     return data
 
-def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT):
+def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT, 
+                        min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED):
     # Veri Hazırlığı
     if isinstance(all_data.columns, pd.MultiIndex):
         try:
@@ -127,7 +128,7 @@ def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_
             # Slope = Günlük logaritmik getiri (~yüzdesel büyüme)
             # R_squared = r_value ** 2 (Uyum kalitesi)
             
-            if slope > MIN_SLOPE and (r_value ** 2) > MIN_R_SQUARED:
+            if slope > min_slope and (r_value ** 2) > min_r2:
                 # Beklenen Fiyat (Exponential: y = exp(intercept + slope * x))
                 expected_log_price = intercept + slope * (len(y) - 1)
                 expected_price = np.exp(expected_log_price)
@@ -231,9 +232,11 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 val = item['l'] * current_price * (1 - commission_rate)
                 stock_revenue += val
                 
+                pl_pct = (current_price / item['b'] - 1) * 100
                 trade_history.append([
                     start_date.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
-                    f"{current_price:.2f}", "SATIS", f"{(current_cash + stock_revenue):,.2f}", "-"
+                    f"{current_price:.2f}", "SATIS", f"{(current_cash + stock_revenue):,.2f}", 
+                    f"P/L: %{pl_pct:.2f} (REBALANCE)"
                 ])
             
             current_cash += stock_revenue
@@ -250,7 +253,7 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
         # ancak find_best_candidate'i refactor etmemiz gerekecek.
         # Hızlı çözüm: find_best_candidate zaten refactor edildi, parametre alacak şekilde güncelleyelim?
         # Zaten lookback_days alıyor. min_slope ve min_r2'yi de ekleyelim.
-        candidates = find_best_candidate(start_date, all_data, lookback_days, max_atr_percent)
+        candidates = find_best_candidate(start_date, all_data, lookback_days, max_atr_percent, min_slope, min_r2)
         # Filtreleme burada tekrar yapılabilir mi? Hayır, zaten filtered geliyor.
         
         top_pick = candidates[0] if candidates else None
@@ -290,10 +293,11 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                     sell_val = item['l'] * curr_p * (1 - commission_rate)
                     current_cash += sell_val
                     active_portfolio.remove(item)
+                    pl_pct = (curr_p / item['b'] - 1) * 100
                     trade_history.append([
                         dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
                         f"{curr_p:.2f}", "STOP LOSS", f"{current_cash:,.2f}", 
-                        f"Drop: %{(curr_p/item['max_p'] - 1)*100:.2f} | Peak: {item['max_p']:.2f}"
+                        f"P/L: %{pl_pct:.2f} | Peak: {item['max_p']:.2f}"
                     ])
                     continue
                 
