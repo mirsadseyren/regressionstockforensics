@@ -74,10 +74,13 @@ with tab1:
         # Filtreleme (Global parametreleri ezmek için burada tekrar filtreleyebiliriz ama 
         # find_best_candidate içinde zaten bir filtre var. En temizi fonksiyonu güncellemekti.)
         # Şimdilik dönen adayları buradaki parametrelere göre tekrar süzelim:
-        filtered_candidates = [
-            c for c in candidates 
-            if c['slope'] >= min_slope and c['r2'] >= min_r2
-        ]
+        if candidates:
+            filtered_candidates = [
+                c for c in candidates 
+                if c['slope'] >= min_slope and c['r2'] >= min_r2
+            ]
+        else:
+            filtered_candidates = []
         
         st.write(f"Bulunan Aday: {len(filtered_candidates)}")
         
@@ -132,10 +135,27 @@ with tab2:
             
             roi = ((final_bal - start_capital) / start_capital) * 100
             
-            c1, c2, c3 = st.columns(3)
+            # Başarı İstatistikleri
+            successful_trades = 0
+            unsuccessful_trades = 0
+            for trade in trade_history:
+                if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
+                    if "P/L: %" in trade[6]:
+                        try:
+                            pl_val = float(trade[6].split('P/L: %')[1].split()[0].split('|')[0].strip())
+                            if pl_val > 0:
+                                successful_trades += 1
+                            else:
+                                unsuccessful_trades += 1
+                        except:
+                            pass
+            
+            c1, c2, c3, c4, c5 = st.columns(5)
             c1.metric("Başlangıç", f"{start_capital:,.0f} TL")
             c2.metric("Bitiş", f"{final_bal:,.0f} TL")
-            c3.metric("Getiri (ROI)", f"%{roi:.2f}", delta_color="normal")
+            c3.metric("Getiri (ROI)", f"%{roi:.2f}")
+            c4.metric("Başarılı İşlem ✅", f"{successful_trades}")
+            c5.metric("Başarısız İşlem ❌", f"{unsuccessful_trades}")
             
             # Grafik
             fig = go.Figure()
@@ -143,6 +163,27 @@ with tab2:
             fig.add_trace(go.Scatter(x=daily_vals.index, y=[start_capital]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
             fig.update_layout(title="Portföy Gelişimi", xaxis_title="Tarih", yaxis_title="TL")
             st.plotly_chart(fig, use_container_width=True)
+            
+            # --- AYLIK GETİRİ TABLOSU ---
+            st.subheader("📅 Aylık Performans Raporu")
+            
+            # Ay sonu değerlerini al
+            monthly_resampled = daily_vals.resample('M').last()
+            monthly_returns = monthly_resampled.pct_change() * 100
+            
+            # İlk ayın getirisini başlangıç sermayesine göre hesapla
+            if not monthly_resampled.empty:
+                monthly_returns.iloc[0] = (monthly_resampled.iloc[0] / start_capital - 1) * 100
+            
+            df_monthly = pd.DataFrame({
+                'Dönem': monthly_returns.index.strftime('%Y - %B'),
+                'Net Kar/Zarar (%)': monthly_returns.values
+            })
+            
+            # Tabloyu göster
+            st.dataframe(df_monthly.style.format({
+                'Net Kar/Zarar (%)': "{:+.2f}%"
+            }).background_gradient(subset=['Net Kar/Zarar (%)'], cmap='RdYlGn', vmin=-15, vmax=15), use_container_width=True)
             
             # İşlem Geçmişi
             st.subheader("İşlem Geçmişi")
@@ -240,16 +281,17 @@ with tab4:
             )
             
             # Filtreleme (Streamlit'teki ek parametreler: slope ve r2)
-            for c in candidates:
-                if c['slope'] >= min_slope and c['r2'] >= min_r2:
-                    opportunities.append({
-                        'Date': current_date,
-                        'Ticker': c['t'].replace('.IS', ''),
-                        'Price': c['price'],
-                        'Slope': c['slope'],
-                        'R2': c['r2'],
-                        'Score': c['score']
-                    })
+            if candidates:
+                for c in candidates:
+                    if c['slope'] >= min_slope and c['r2'] >= min_r2:
+                        opportunities.append({
+                            'Date': current_date,
+                            'Ticker': c['t'].replace('.IS', ''),
+                            'Price': c['price'],
+                            'Slope': c['slope'],
+                            'R2': c['r2'],
+                            'Score': c['score']
+                        })
             
             progress_bar.progress((idx + 1) / len(scan_dates))
         

@@ -155,10 +155,10 @@ def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_
             return candidates
         except Exception as e:
             # print(f"Vectorized search error: {e}")
-            pass
+            return []
 
-    # Eski Yavaş Mantık (Failsafe)
-    # ... (Eski find_best_candidate kodunun geri kalanı)
+    # Eğer precalc None ise veya fonksiyon buraya düşerse boş liste dön
+    return []
 
 if __name__ == "__main__":
     # 1. VERİ YÜKLEME
@@ -297,10 +297,11 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                             sell_val = item['l'] * curr_p * (1 - commission_rate)
                             current_cash += sell_val
                             active_portfolio.remove(item)
+                            pl_pct = (curr_p / item['b'] - 1) * 100
                             trade_history.append([
                                 dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
                                 f"{curr_p:.2f}", "HACIM STOP", f"{current_cash:,.2f}", 
-                                f"Vol: {curr_vol/avg_vol:.1f}x Avg"
+                                f"P/L: %{pl_pct:.2f} | Vol: {curr_vol/avg_vol:.1f}x Avg"
                             ])
                 except:
                     pass
