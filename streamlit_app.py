@@ -80,11 +80,18 @@ with tab1:
         date_gap = st.number_input("Geriye Dönük Gün (0 = Bugün)", min_value=0, value=0)
     
     if st.button("Taramayı Başlat"):
-        # Son tarihi bul
+        # Son tarihi bul (Tab 3 yöntemindeki gibi robust erişim)
         if isinstance(all_data.columns, pd.MultiIndex):
-            last_date = all_data['Close'].index[-1]
+            try:
+                closes = all_data['Close']
+            except:
+                closes = all_data.xs('Close', axis=1, level=0)
         else:
-            last_date = all_data.index[-1]
+            closes = all_data
+            
+        # En az bir hissenin verisi olan son gerçek günü bul (Tab 3 dropna mantığına benzer)
+        valid_dates = closes.index[closes.notna().any(axis=1)]
+        last_date = valid_dates[-1] if not valid_dates.empty else closes.index[-1]
             
         target_date = last_date - timedelta(days=date_gap)
         st.info(f"Analiz Tarihi: {target_date.date()}")
@@ -277,11 +284,18 @@ with tab4:
     if st.button("Fırsatları Tara"):
         opportunities = []
         
-        # Son tarihi bul
+        # Son tarihi bul (Tab 3 yöntemindeki gibi robust erişim)
         if isinstance(all_data.columns, pd.MultiIndex):
-            latest_date = all_data['Close'].index[-1]
+            try:
+                closes = all_data['Close']
+            except:
+                closes = all_data.xs('Close', axis=1, level=0)
         else:
-            latest_date = all_data.index[-1]
+            closes = all_data
+            
+        # En az bir hissenin verisi olan son gerçek günü bul
+        valid_dates = closes.index[closes.notna().any(axis=1)]
+        latest_date = valid_dates[-1] if not valid_dates.empty else closes.index[-1]
             
         start_scan = latest_date - timedelta(days=scan_lookback)
         scan_dates = pd.date_range(start=start_scan, end=latest_date, freq=f'{scan_step}D')

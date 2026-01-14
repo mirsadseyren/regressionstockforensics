@@ -178,15 +178,18 @@ def get_vectorized_metrics(all_data, lookback_days):
     
     vol_avgs = volumes.rolling(21).mean()
     
+    # Forward fill (ffill) ekleyerek terminal NaN'ları (örneğin seans başı/sonu veri eksikliği) tolere ediyoruz.
+    # Bu, Tab 3'teki .dropna() yöntemine benzer şekilde her hissenin en son valid verisini kullanmasını sağlar.
+    limit = 5
     return {
-        'slopes': slopes,
-        'intercepts': intercepts,
-        'r2': r_squareds,
-        'atr_pct': atr_pcts,
-        'discounts': discounts,
-        'volumes': volumes,
-        'vol_avgs': vol_avgs,
-        'prices': closes
+        'slopes': slopes.ffill(limit=limit),
+        'intercepts': intercepts.ffill(limit=limit),
+        'r2': r_squareds.ffill(limit=limit),
+        'atr_pct': atr_pcts.ffill(limit=limit),
+        'discounts': discounts.ffill(limit=limit),
+        'volumes': volumes.ffill(limit=limit),
+        'vol_avgs': vol_avgs.ffill(limit=limit),
+        'prices': closes.ffill(limit=limit)
     }
 
 def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT, 
