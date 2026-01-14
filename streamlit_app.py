@@ -45,7 +45,7 @@ if all_data is None:
     st.stop()
 
 # --- TABLAR ---
-tab1, tab2, tab3 = st.tabs(["🔍 Günlük Tarama", "📈 Simülasyon Backtest", "📊 Hisse Analizi"])
+tab1, tab2, tab3, tab4 = st.tabs(["🔍 Günlük Tarama", "📈 Simülasyon Backtest", "📊 Hisse Analizi", "📅 Fırsat Zaman Çizelgesi"])
 
 # === TAB 1: GÜNLÜK TARAMA ===
 with tab1:
@@ -183,3 +183,106 @@ with tab3:
         st.write(f"**R-Squared:** {r_value**2:.4f}")
         
         st.plotly_chart(fig2, use_container_width=True)
+
+# === TAB 4: OPPORTUNITY TIMELINE ===
+with tab4:
+    st.header("📅 Fırsat Zaman Çizelgesi")
+    st.write("Son 1 yıl boyunca stratejiye uygun tüm alım fırsatlarını tarar ve bir zaman çizelgesinde gösterir.")
+    
+    col_t1, col_t2 = st.columns(2)
+    with col_t1:
+        scan_step = st.slider("Tarama Sıklığı (Gün)", min_value=1, max_value=10, value=3)
+        scan_lookback = st.number_input("Geriye Dönük Tarama (Gün)", value=365)
+    
+    if st.button("Fırsatları Tara"):
+        opportunities = []
+        
+        # Son tarihi bul
+        if isinstance(all_data.columns, pd.MultiIndex):
+            latest_date = all_data['Close'].index[-1]
+        else:
+            latest_date = all_data.index[-1]
+            
+        start_scan = latest_date - timedelta(days=scan_lookback)
+        scan_dates = pd.date_range(start=start_scan, end=latest_date, freq=f'{scan_step}D')
+        
+        progress_bar = st.progress(0)
+        status_text = st.empty()
+        
+        for idx, current_date in enumerate(scan_dates):
+            status_text.text(f"Taranıyor: {current_date.date()}")
+            
+            # find_best_candidate'e parametrelerimizi geçiriyoruz
+            candidates = find_best_candidate(
+                current_date, 
+                all_data, 
+                lookback_days=lookback_days, 
+                max_atr_percent=atr_limit
+            )
+            
+            # Filtreleme (Streamlit'teki ek parametreler: slope ve r2)
+            for c in candidates:
+                if c['slope'] >= min_slope and c['r2'] >= min_r2:
+                    opportunities.append({
+                        'Date': current_date,
+                        'Ticker': c['t'].replace('.IS', ''),
+                        'Price': c['price'],
+                        'Slope': c['slope'],
+                        'R2': c['r2'],
+                        'Score': c['score']
+                    })
+            
+            progress_bar.progress((idx + 1) / len(scan_dates))
+        
+        status_text.text("Tarama tamamlandı!")
+        
+        if opportunities:
+            df_opps = pd.DataFrame(opportunities)
+            
+            # Görselleştirme: Zaman Çizelgesi
+            # Y ekseni için rastgele küçük bir offset vererek üst üste binmeyi azaltalım
+            df_opps['Y'] = np.random.uniform(-0.5, 0.5, size=len(df_opps))
+            
+            fig3 = go.Figure()
+            
+            # Her hisse için ayrı bir scatter (veya tek bir scatter ile text label)
+            fig3.add_trace(go.Scatter(
+                x=df_opps['Date'],
+                y=df_opps['Y'],
+                mode='markers+text',
+                text=df_opps['Ticker'],
+                textposition="top center",
+                marker=dict(
+                    size=10,
+                    color=df_opps['Score'],
+                    colorscale='Viridis',
+                    showscale=True,
+                    colorbar=dict(title="Skor")
+                ),
+                hovertemplate=(
+                    "<b>%{text}</b><br>" +
+                    "Tarih: %{x}<br>" +
+                    "Fiyat: %{customdata[0]:.2f}<br>" +
+                    "Eğim: %{customdata[1]:.4f}<br>" +
+                    "R2: %{customdata[2]:.2f}<br>" +
+                    "Skor: %{marker.color:.4f}<extra></extra>"
+                ),
+                customdata=df_opps[['Price', 'Slope', 'R2']]
+            ))
+            
+            fig3.update_layout(
+                title="Geçmiş Fırsatlar Zaman Çizelgesi",
+                xaxis_title="Tarih",
+                yaxis=dict(showticklabels=False, range=[-1, 1], zeroline=True, zerolinecolor='gray'),
+                height=500,
+                showlegend=False
+            )
+            
+            st.plotly_chart(fig3, use_container_width=True)
+            
+            # Tablo Görünümü
+            st.subheader("Fırsat Listesi")
+            st.dataframe(df_opps.drop(columns=['Y']).sort_values('Date', ascending=False))
+        else:
+            st.warning("Bu periyotta parametrelere uygun fırsat bulunamadı.")
+
