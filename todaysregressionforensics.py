@@ -18,26 +18,26 @@ if __name__ == "__main__":
         exit()
         
     # 2. Verileri Yükle (Cache'den veya taze indir)
-    # Cache dosyasının güncelliğini kontrol edelim, eski ise yeniden indirsin
-    # Şimdilik load_data cache kullanıyor, eğer güncel veri yoksa cache silinmeli.
-    # Kullanıcı "bugünün" verisini istediği için cache'i silsen iyi olur ama yavaşlatır.
-    # Pratik çözüm: load_data cache kullanır, kullanıcı taze veri isterse cache dosyasını siler.
     print("Veriler yükleniyor...")
     all_data = load_data(tickers)
+    
+    from regression import get_vectorized_metrics, LOOKBACK_DAYS
+    print("Metrikler hesaplanıyor...")
+    precalc = get_vectorized_metrics(all_data, LOOKBACK_DAYS)
     
     # 3. Son İşlem Gününü Bul
     if isinstance(all_data.columns, pd.MultiIndex):
         try:
             last_date = all_data['Close'].index[-1] - timedelta(days=dategap)
         except KeyError:
-            last_date = all_data.xs('Close', axis=1, level=0).index[-1]
+            last_date = all_data.xs('Close', axis=1, level=0).index[-1] - timedelta(days=dategap)
     else:
-        last_date = all_data.index[-1]
+        last_date = all_data.index[-1] - timedelta(days=dategap)
         
-    print(f"Analiz Tarihi: {datetime.now().date() - timedelta(days=dategap)}")
+    print(f"Analiz Tarihi: {last_date.date()}")
     
     # 4. Adayları Bul
-    candidates = find_best_candidate(last_date, all_data)
+    candidates = find_best_candidate(last_date, all_data, precalc=precalc)
     
     print(f"\nBulunan Aday Sayısı: {len(candidates)}")
     print("-" * 90)
