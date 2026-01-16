@@ -60,6 +60,19 @@ if all_data is None:
     st.stop()
 
 # --- METRİK HESAPLAMA (Vektörize) ---
+# Son tarihi bul (Robust erişim)
+if isinstance(all_data.columns, pd.MultiIndex):
+    try:
+        closes = all_data['Close']
+    except:
+        closes = all_data.xs('Close', axis=1, level=0)
+else:
+    closes = all_data
+
+# En az bir hissenin verisi olan son gerçek günü bul
+valid_dates = closes.index[closes.notna().any(axis=1)]
+last_available_date = valid_dates[-1] if not valid_dates.empty else closes.index[-1]
+
 @st.cache_data(ttl=3600) # 1 saat cache
 def get_metrics(_data, _lookback):
     return get_vectorized_metrics(_data, _lookback)
@@ -77,23 +90,10 @@ with tab1:
     
     col1, col2 = st.columns(2)
     with col1:
-        date_gap = st.number_input("Geriye Dönük Gün (0 = Bugün)", min_value=0, value=0)
+        selected_date = st.date_input("Analiz Tarihi Seçin", value=last_available_date.date())
     
     if st.button("Taramayı Başlat"):
-        # Son tarihi bul (Tab 3 yöntemindeki gibi robust erişim)
-        if isinstance(all_data.columns, pd.MultiIndex):
-            try:
-                closes = all_data['Close']
-            except:
-                closes = all_data.xs('Close', axis=1, level=0)
-        else:
-            closes = all_data
-            
-        # En az bir hissenin verisi olan son gerçek günü bul (Tab 3 dropna mantığına benzer)
-        valid_dates = closes.index[closes.notna().any(axis=1)]
-        last_date = valid_dates[-1] if not valid_dates.empty else closes.index[-1]
-            
-        target_date = last_date - timedelta(days=date_gap)
+        target_date = pd.Timestamp(selected_date)
         st.info(f"Analiz Tarihi: {target_date.date()}")
         
         candidates = find_best_candidate(
