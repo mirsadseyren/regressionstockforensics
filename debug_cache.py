@@ -20,7 +20,10 @@ if os.path.exists(DATA_CACHE_FILE):
     
     print("\nNumber of non-NaN values in the last row:")
     print(closes.iloc[-1].notna().sum())
-    
+    csv_data = closes.to_csv(index=False)
+    with open("cache_file.csv", 'w') as f:
+        f.write(csv_data)
+
     mtime = datetime.fromtimestamp(os.path.getmtime(DATA_CACHE_FILE))
     print(f"\nCache file mtime: {mtime}")
 else:

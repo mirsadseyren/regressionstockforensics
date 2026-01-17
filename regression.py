@@ -24,7 +24,7 @@ MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.025   # Günlük asgari büyüme hızı
 STOP_LOSS_RATE = 0.10 # %15 Stop Loss
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
-VOLUME_STOP_RATIO = 5.0 # Hacim ortalamasının kaç katına çıkarsa satılsın
+
 
 def get_tickers_from_file(file_path):
     if not os.path.exists(file_path):
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     
     # Veri Ayrıştırma (Simülasyon İçin Loop Dışında Lazım)
 def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
-                   volume_stop_ratio=VOLUME_STOP_RATIO, stop_loss_rate=STOP_LOSS_RATE,
+                   stop_loss_rate=STOP_LOSS_RATE,
                    rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE,
                    max_atr_percent=MAX_ATR_PERCENT, progress_callback=None):
                    
@@ -360,23 +360,7 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                     ])
                     continue
                 
-                # Hacim Stop
-                try:
-                    curr_vol = raw_volume.at[dt, item['t']]
-                    avg_vol = precalc['vol_avgs'].at[dt, item['t']]
-                    if not pd.isna(curr_vol) and not pd.isna(avg_vol) and avg_vol > 0:
-                        if curr_vol > avg_vol * volume_stop_ratio:
-                            sell_val = item['l'] * curr_p * (1 - commission_rate)
-                            current_cash += sell_val
-                            active_portfolio.remove(item)
-                            pl_pct = (curr_p / item['b'] - 1) * 100
-                            trade_history.append([
-                                dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
-                                f"{curr_p:.2f}", "HACIM STOP", f"{current_cash:,.2f}", 
-                                f"P/L: %{pl_pct:.2f} | Vol: {curr_vol/avg_vol:.1f}x Avg"
-                            ])
-                except:
-                    pass
+
             
             # 2. Portföy Değeri
             port_value = current_cash

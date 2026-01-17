@@ -11,7 +11,7 @@ from regression import (
     load_data, get_tickers_from_file, find_best_candidate, run_simulation,
     get_vectorized_metrics, get_clean_data,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
-    VOLUME_STOP_RATIO, STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
+    STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
     MAX_ATR_PERCENT
 )
 
@@ -26,7 +26,7 @@ lookback_days = st.sidebar.number_input("Lookback Days", value=LOOKBACK_DAYS)
 min_slope = st.sidebar.number_input("Min Slope (Eğim)", value=MIN_SLOPE, format="%.4f")
 min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
 stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
-vol_stop_ratio = st.sidebar.number_input("Volume Stop Ratio", value=VOLUME_STOP_RATIO)
+
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
 start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
@@ -153,7 +153,6 @@ with tab2:
                 min_slope=min_slope,
                 min_r2=min_r2,
                 stop_loss_rate=stop_loss,
-                volume_stop_ratio=vol_stop_ratio,
                 start_capital=start_capital,
                 max_atr_percent=atr_limit,
                 progress_callback=p_callback
