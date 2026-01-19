@@ -196,5 +196,133 @@ def patch_cache():
     else:
         print("Güncellenecek eksik/hatalı veri bulunamadı.")
 
+def clean_and_adjust_data(data):
+    """
+    Veriyi temizler ve düzenler:
+    1. Eksik iş günlerini (resmi tatiller) ffill ile doldurur.
+    2. %40 ve üzeri ani düşüşleri (bölünme/rüçhan) tespit edip tarihsel veriyi düzeltir.
+    """
+    print("--- Veri Temizleme ve Düzeltme İşlemi ---")
+    
+    if data is None or data.empty:
+        return data
+
+    # MultiIndex kontrolü
+    is_multiindex = isinstance(data.columns, pd.MultiIndex)
+    
+    if is_multiindex:
+        tickers = data.columns.levels[1].unique()
+    else:
+        # Tekil hisse için çalıştırılıyorsa, genelde bu formatta değil ama destekleyelim
+        # Bu yapı ana `regression.py` cache yapısına göre kurgulandı (MultiIndex)
+        tickers = data.columns
+        
+    cleaned_count = 0
+    split_count = 0
+    
+    # Tüm iş günlerini kapsayan bir indeks oluştur (Hafta sonları hariç)
+    # Veri setindeki en eski ve en yeni tarih aralığında
+    start_date = data.index.min()
+    end_date = data.index.max()
+    all_business_days = pd.date_range(start=start_date, end=end_date, freq='B')
+    
+    # DataFrame'i bu yeni indekse göre genişlet (Reindex)
+    # Bu işlem eksik günleri NaN olarak ekler
+    data = data.reindex(all_business_days)
+    
+    # 1. Eksik Günleri Doldur (FFILL)
+    # Tatil günlerinde önceki günün kapanışı geçerlidir.
+    data = data.ffill()
+    print("Tatil günleri ve eksik tarihler önceki günün verisiyle dolduruldu (ffill).")
+    
+    # 2. Bölünme/Rüçhan Düzeltmesi
+    # Her hisse için tek tek kontrol et
+    print("Bölünme/Rüçhan kontrolü yapılıyor (>%40 düşüşler)...")
+    
+    # Geçici bir kopyada işlem yapıp en son ana veriye atayacağız (Performans için loop içinde loc kullanmak yavaş olabilir ama güvenli)
+    # Ancak pandas'ta sütun bazlı işlem daha hızlıdır. 
+    
+    for ticker in tqdm(tickers, desc="Data Cleaning"):
+        yf_ticker = ticker # MultiIndex'te zaten .IS olarak geliyor genelde
+        
+        try:
+            if is_multiindex:
+                 # Dilimleme (Slicing) ile seriyi al
+                closes = data.loc[:, ('Close', yf_ticker)]
+            else:
+                closes = data[yf_ticker]
+        except KeyError:
+            continue
+            
+        # Yüzdesel değişim hesapla
+        pct_changes = closes.pct_change()
+        
+        # %40'tan fazla düşüş olan günleri bul (Threshold: -0.40)
+        # Genellikle bölünmelerde fiyat yarıya inebilir (-0.50) veya bedelli oranına göre değişir.
+        # Bu basit mantıkta, normal piyasa koşulunda %40 düşüş olmayacağını varsayıyoruz.
+        drops = pct_changes[pct_changes < -0.40]
+        
+        if not drops.empty:
+            # Düşüşleri tarih sırasına göre işle (sondan başa veya baştan sona fark eder mi? Baştan sona kümülatif gitmeli)
+            # Ancak her düzeltme geçmişi etkileyeceği için, döngüyle yapmak en garantisi.
+            
+            # Drops serisindeki her tarih için adjustment factor hesapla
+            for date in drops.index:
+                # Düşüş günündeki fiyat
+                price_curr = closes.loc[date]
+                # Bir önceki günün fiyatı (artık ffill yapıldığı için date-1 business day diyebiliriz ama iloc garanti)
+                
+                # index'teki yerini bul
+                idx = data.index.get_loc(date)
+                if idx == 0: continue
+                
+                price_prev = closes.iloc[idx-1]
+                
+                if price_prev == 0 or pd.isna(price_prev): continue
+
+                # Düzeltme katsayısı (Adjustment Factor)
+                # Geçmiş fiyatları bu katsayıya bölerek bugünkü, bölünmüş fiyata uyarlarız.
+                # Örnek: Fiyat 100 -> 50 oldu (Factor = 2). Geçmişteki 100'ü 50 yapmak için 2'ye böleriz.
+                # Factor = Eski / Yeni
+                factor = price_prev / price_curr
+                
+                # 100 kat gibi absürt oranlar varsa yoksay (veri hatası olabilir)
+                if factor > 100: continue 
+                
+                split_count += 1
+                
+                # O tarihten ÖNCEKİ tüm verileri düzelt
+                # MultiIndex ise tüm OHLCV sütunlarını düzeltmeliyiz
+                mask_prev = data.index < date
+                
+                if is_multiindex:
+                    cols = ['Open', 'High', 'Low', 'Close']
+                    for col in cols:
+                        if (col, yf_ticker) in data.columns:
+                            data.loc[mask_prev, (col, yf_ticker)] /= factor
+                            
+                    # Volume bölünmez, ama hisse sayısı arttığı için hacim de artar mı? 
+                    # Genelde split adjustment'ta fiyat düşer, hacim (adet) artar. 
+                    # Yahoo Finance 'Back Adjusted' verisinde Volume genelde ellenmez veya ters orantıda artırılır.
+                    # Basitlik adına Volume'a dokunmuyoruz veya da factor ile çarpabiliriz.
+                    # Standart: Price / Factor, Volume * Factor
+                    if ('Volume', yf_ticker) in data.columns:
+                         data.loc[mask_prev, ('Volume', yf_ticker)] *= factor
+                         
+                else:
+                    # Tekil dataFrame (sadece close ise)
+                    data.loc[mask_prev, yf_ticker] /= factor
+    
+    print(f"Toplam {split_count} adet bölünme/düzeltme uygulandı.")
+    return data
+
 if __name__ == "__main__":
     patch_cache()
+    
+    # Patch işleminden sonra cleaning yapıp tekrar kaydet
+    if os.path.exists(CACHE_FILE):
+        print("\nSon temizlik ve düzenleme yapılıyor...")
+        df = pd.read_pickle(CACHE_FILE)
+        cleaned_df = clean_and_adjust_data(df)
+        cleaned_df.to_pickle(CACHE_FILE)
+        print("Temizlenmiş veri kaydedildi.")
