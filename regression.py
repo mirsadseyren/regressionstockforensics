@@ -21,7 +21,7 @@ COMMISSION_RATE = 0.002
 REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
 LOOKBACK_DAYS = 30  # Regresyon için geriye dönük gün sayısı
 MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
-MIN_SLOPE = 0.025   # Günlük asgari büyüme hızı
+MIN_SLOPE = 0.005   # Günlük asgari büyüme hızı (0.5%)
 STOP_LOSS_RATE = 0.10 # %15 Stop Loss
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
 
