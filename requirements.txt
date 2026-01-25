@@ -7,3 +7,4 @@ tqdm
 openpyxl
 streamlit
 plotly
+altair<5
