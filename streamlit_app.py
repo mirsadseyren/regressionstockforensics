@@ -34,6 +34,18 @@ start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(STA
 if 'force_refresh' not in st.session_state:
     st.session_state.force_refresh = False
 
+if 'daily_scan_data' not in st.session_state:
+    st.session_state.daily_scan_data = None
+    
+if 'simulation_data' not in st.session_state:
+    st.session_state.simulation_data = None
+    
+if 'single_analysis_data' not in st.session_state:
+    st.session_state.single_analysis_data = None
+
+if 'timeline_data' not in st.session_state:
+    st.session_state.timeline_data = None
+
 @st.cache_data(ttl=3600*12) # 12 saat cache
 def get_data(force=False):
     tickers = get_tickers_from_file(STOX_FILE)
@@ -105,8 +117,10 @@ with tab1:
             min_r2=min_r2,
             precalc=precalc
         )
+        st.session_state.daily_scan_data = candidates
         
-        # Filtreleme find_best_candidate içinde yapıldığı için filtered_candidates direkt candidates olur
+    if st.session_state.daily_scan_data is not None:
+        candidates = st.session_state.daily_scan_data
         filtered_candidates = candidates if candidates else []
         
         st.write(f"Bulunan Aday: {len(filtered_candidates)}")
@@ -158,76 +172,80 @@ with tab2:
                 progress_callback=p_callback
             )
             p_bar.empty()
+            st.session_state.simulation_data = (daily_vals, trade_history, final_bal)
             
-            roi = ((final_bal - start_capital) / start_capital) * 100
+    if st.session_state.simulation_data is not None:
+        daily_vals, trade_history, final_bal = st.session_state.simulation_data
+        
+        roi = ((final_bal - start_capital) / start_capital) * 100
+        
+        # Başarı İstatistikleri
+        successful_trades = 0
+        unsuccessful_trades = 0
+        for trade in trade_history:
+            if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
+                if "P/L: %" in trade[6]:
+                    try:
+                        pl_val = float(trade[6].split('P/L: %')[1].split()[0].split('|')[0].strip())
+                        if pl_val > 0:
+                            successful_trades += 1
+                        else:
+                            unsuccessful_trades += 1
+                    except:
+                        pass
+        
+        c1, c2, c3, c4, c5 = st.columns(5)
+        c1.metric("Başlangıç", f"{start_capital:,.0f} TL")
+        c2.metric("Bitiş", f"{final_bal:,.0f} TL")
+        c3.metric("Getiri (ROI)", f"%{roi:.2f}")
+        c4.metric("Başarılı İşlem ✅", f"{successful_trades}")
+        c5.metric("Başarısız İşlem ❌", f"{unsuccessful_trades}")
+        
+        # Grafik
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=daily_vals.index, y=daily_vals.values, mode='lines', name='Portföy Değeri'))
+        fig.add_trace(go.Scatter(x=daily_vals.index, y=[start_capital]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
+        fig.update_layout(title="Portföy Gelişimi", xaxis_title="Tarih", yaxis_title="TL")
+        st.plotly_chart(fig, use_container_width=True)
+        
+        # --- AYLIK GETİRİ TABLOSU ---
+        st.subheader("📅 Aylık Performans Raporu")
+        
+        # Ay sonu değerlerini al
+        monthly_resampled = daily_vals.resample('M').last()
+        monthly_returns = monthly_resampled.pct_change() * 100
+        
+        # İlk ayın getirisini başlangıç sermayesine göre hesapla
+        if not monthly_resampled.empty:
+            monthly_returns.iloc[0] = (monthly_resampled.iloc[0] / start_capital - 1) * 100
+        
+        df_monthly = pd.DataFrame({
+            'Dönem': monthly_returns.index.strftime('%Y - %B'),
+            'Net Kar/Zarar (%)': monthly_returns.values
+        })
+        
+        # Tabloyu göster
+        st.dataframe(df_monthly.style.format({
+            'Net Kar/Zarar (%)': "{:+.2f}%"
+        }).background_gradient(subset=['Net Kar/Zarar (%)'], cmap='RdYlGn', vmin=-15, vmax=15), use_container_width=True)
+        
+        # İşlem Geçmişi
+        st.subheader("İşlem Geçmişi")
+        if trade_history:
+            df_hist = pd.DataFrame(trade_history, columns=["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"])
             
-            # Başarı İstatistikleri
-            successful_trades = 0
-            unsuccessful_trades = 0
-            for trade in trade_history:
-                if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
-                    if "P/L: %" in trade[6]:
-                        try:
-                            pl_val = float(trade[6].split('P/L: %')[1].split()[0].split('|')[0].strip())
-                            if pl_val > 0:
-                                successful_trades += 1
-                            else:
-                                unsuccessful_trades += 1
-                        except:
-                            pass
-            
-            c1, c2, c3, c4, c5 = st.columns(5)
-            c1.metric("Başlangıç", f"{start_capital:,.0f} TL")
-            c2.metric("Bitiş", f"{final_bal:,.0f} TL")
-            c3.metric("Getiri (ROI)", f"%{roi:.2f}")
-            c4.metric("Başarılı İşlem ✅", f"{successful_trades}")
-            c5.metric("Başarısız İşlem ❌", f"{unsuccessful_trades}")
-            
-            # Grafik
-            fig = go.Figure()
-            fig.add_trace(go.Scatter(x=daily_vals.index, y=daily_vals.values, mode='lines', name='Portföy Değeri'))
-            fig.add_trace(go.Scatter(x=daily_vals.index, y=[start_capital]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
-            fig.update_layout(title="Portföy Gelişimi", xaxis_title="Tarih", yaxis_title="TL")
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # --- AYLIK GETİRİ TABLOSU ---
-            st.subheader("📅 Aylık Performans Raporu")
-            
-            # Ay sonu değerlerini al
-            monthly_resampled = daily_vals.resample('M').last()
-            monthly_returns = monthly_resampled.pct_change() * 100
-            
-            # İlk ayın getirisini başlangıç sermayesine göre hesapla
-            if not monthly_resampled.empty:
-                monthly_returns.iloc[0] = (monthly_resampled.iloc[0] / start_capital - 1) * 100
-            
-            df_monthly = pd.DataFrame({
-                'Dönem': monthly_returns.index.strftime('%Y - %B'),
-                'Net Kar/Zarar (%)': monthly_returns.values
-            })
-            
-            # Tabloyu göster
-            st.dataframe(df_monthly.style.format({
-                'Net Kar/Zarar (%)': "{:+.2f}%"
-            }).background_gradient(subset=['Net Kar/Zarar (%)'], cmap='RdYlGn', vmin=-15, vmax=15), use_container_width=True)
-            
-            # İşlem Geçmişi
-            st.subheader("İşlem Geçmişi")
-            if trade_history:
-                df_hist = pd.DataFrame(trade_history, columns=["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"])
-                
-                def style_trades(row):
-                    if row['İşlem'] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
-                        info = row['Bilgi']
-                        if 'P/L: %-' in info:
-                            return ['background-color: #ff4b4b; color: white; font-weight: bold'] * len(row) # Kırmızı
-                        elif 'P/L: %' in info:
-                            return ['background-color: #21c35a; color: white; font-weight: bold'] * len(row) # Yeşil
-                    return [''] * len(row)
+            def style_trades(row):
+                if row['İşlem'] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
+                    info = row['Bilgi']
+                    if 'P/L: %-' in info:
+                        return ['background-color: #ff4b4b; color: white; font-weight: bold'] * len(row) # Kırmızı
+                    elif 'P/L: %' in info:
+                        return ['background-color: #21c35a; color: white; font-weight: bold'] * len(row) # Yeşil
+                return [''] * len(row)
 
-                st.dataframe(df_hist.style.apply(style_trades, axis=1))
-            else:
-                st.write("İşlem yok.")
+            st.dataframe(df_hist.style.apply(style_trades, axis=1))
+        else:
+            st.write("İşlem yok.")
 
 # === TAB 3: HİSSE ANALİZİ ===
 with tab3:
@@ -259,6 +277,11 @@ with tab3:
         # log(y) = a + bx  => y = exp(a + bx)
         reg_line_log = intercept + slope * x
         reg_line = np.exp(reg_line_log)
+        
+        st.session_state.single_analysis_data = (series_window, reg_line, slope, r_value)
+
+    if st.session_state.single_analysis_data:
+        series_window, reg_line, slope, r_value = st.session_state.single_analysis_data
         
         # Grafik
         fig2 = go.Figure()
@@ -331,6 +354,10 @@ with tab4:
             progress_bar.progress((idx + 1) / len(scan_dates))
         
         status_text.text("Tarama tamamlandı!")
+        st.session_state.timeline_data = opportunities
+        
+    if st.session_state.timeline_data is not None:
+        opportunities = st.session_state.timeline_data
         
         if opportunities:
             df_opps = pd.DataFrame(opportunities)
@@ -345,8 +372,8 @@ with tab4:
             fig3.add_trace(go.Scatter(
                 x=df_opps['Date'],
                 y=df_opps['Y'],
-                mode='markers+text',
-                text=df_opps['Ticker'],
+                mode='markers',
+                # text=df_opps['Ticker'],
                 textposition="top center",
                 marker=dict(
                     size=10,
