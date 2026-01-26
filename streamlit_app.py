@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from scipy.stats import linregress
+from fix_cache import fix_cache
 
 # Import from regression.py
 from regression import (
@@ -51,7 +52,8 @@ def get_data(force=False):
     tickers = get_tickers_from_file(STOX_FILE)
     if not tickers:
         return None
-    data = load_data(tickers, force_refresh=force)
+    tickers_fixed = fix_cache(tickers, force=force)
+    data = load_data(tickers_fixed, force_refresh=force)
     return get_clean_data(data)
 
 # Yan menüye yenileme butonu
