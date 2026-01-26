@@ -51,13 +51,15 @@ def adjust_prior_prices(series, threshold=0.6):
         
     return series
 
-def fix_cache():
-    if not os.path.exists(DATA_CACHE_FILE):
-        print(f"Error: {DATA_CACHE_FILE} not found.")
-        return
+def fix_cache(df=None):
+    if df is None:
+        if not os.path.exists(DATA_CACHE_FILE):
+            print(f"Error: {DATA_CACHE_FILE} not found.")
+            return None
 
-    print("Loading cache...")
-    df = pd.read_pickle(DATA_CACHE_FILE)
+        print("Loading cache from file...")
+        df = pd.read_pickle(DATA_CACHE_FILE)
+    
     print(f"Original shape: {df.shape}")
 
     # 1. Fill gaps (Resample to Business Days and Fill)
@@ -77,40 +79,22 @@ def fix_cache():
     is_multiindex = isinstance(df.columns, pd.MultiIndex)
     
     if is_multiindex:
-        # Assuming typical yfinance structure where columns are (PriceType, Ticker)
-        # We need to identify tickers.
-        # df.columns.levels[1] should be tickers if level 0 is attributes
-        # Or check if 'Close' is in level 0.
-        
         if 'Close' in df.columns.get_level_values(0):
-            # Level 0 is Attribute (Close, Open, etc.), Level 1 is Ticker
             tickers = df.columns.get_level_values(1).unique()
             
             for ticker in tickers:
                 try:
-                    # adjusting Close is critical. We should usually adjust Open, High, Low too.
-                    # Let's calculate factors based on Close and apply to OHLC
-                    
                     close_series = df[('Close', ticker)]
                     
-                    # We'll reuse the logic to find factors, but we need to apply them to O,H,L,C
-                    # Let's extract the "adjust_prior_prices" logic to just get factors preferably,
-                    # but for now let's just run the adjustment on Close and verify.
-                    # Ideally, if Close drops 50%, Open/High/Low should also be adjusted.
-                    
-                    # Custom logic for whole group adjustment:
-                    # Calculate factors from Close
                     vals = close_series.values
                     ratios = np.zeros(len(vals))
                     ratios[:] = 1.0 # Default no change
                     
                     mask_valid = (vals[:-1] != 0) & (~np.isnan(vals[:-1])) & (~np.isnan(vals[1:]))
-                    # effective ratios
                     curr_ratios = np.zeros(len(vals)-1)
                     curr_ratios[mask_valid] = vals[1:][mask_valid] / vals[:-1][mask_valid]
                     curr_ratios[~mask_valid] = 1.0
                     
-                    # Threshold check
                     drop_indices = np.where(curr_ratios < 0.6)[0] + 1
                     
                     if len(drop_indices) > 0:
@@ -121,31 +105,32 @@ def fix_cache():
                              print(f"  - Split at {df.index[idx].date()}: Factor {factor:.4f}")
                              cum_adj_factor[:idx] *= factor
                         
-                        # Apply to all relevant columns for this ticker
                         for col_attr in ['Open', 'High', 'Low', 'Close', 'Adj Close']:
                             if (col_attr, ticker) in df.columns:
                                 df.loc[:, (col_attr, ticker)] *= cum_adj_factor
                                 
                 except Exception as e:
                     print(f"Error processing {ticker}: {e}")
-                    
         else:
-             print("Unknown MultiIndex structure. Attempting to adjust all columns independently (risky if mix of price and vol).")
-             # Fallback: treat every column as a price series
+             print("Unknown MultiIndex structure. Attempting to adjust all columns independently.")
              for col in df.columns:
                  df[col] = adjust_prior_prices(df[col])
 
     else:
-        # Single Index Columns - Assume they are tickers and values are Close prices
         print("Single Index detected (Assuming Close prices). Adjusting each column...")
         for col in df.columns:
-            # Skip if it looks like Volume (heuristic: mean > 1000000? or name?)
-            # Assuming these are stats/prices.
             df[col] = adjust_prior_prices(df[col])
 
-    print("Saving fixed cache...")
-    df.to_pickle(DATA_CACHE_FILE)
-    print("Done.")
+    # Save to file only if we didn't receive an input dataframe (standalone mode)
+    # Actually, we might want to save it anyway if it's the main cache.
+    # But for flexibility, let's just return it and let the caller decide.
+    # If run from CLI, we save it.
+    return df
 
 if __name__ == "__main__":
-    fix_cache()
+    fixed_df = fix_cache()
+    if fixed_df is not None:
+        print("Saving fixed cache...")
+        fixed_df.to_pickle(DATA_CACHE_FILE)
+        print("Done.")
+
