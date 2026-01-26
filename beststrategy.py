@@ -21,7 +21,7 @@ def evaluate_strategy(params):
     Worker function to run a single simulation with given parameters.
     params: (lookback, slope, r2, stop_loss, atr)
     """
-    lookback, slope, r2, stop_loss, atr = params
+    lookback, slope, r2, stop_loss, atr, slope_stop = params
     
     try:
         daily_vals, _, final_balance = run_simulation(
@@ -30,6 +30,7 @@ def evaluate_strategy(params):
             min_slope=slope,
             min_r2=r2,
             stop_loss_rate=stop_loss,
+            slope_stop_factor=slope_stop,
             max_atr_percent=atr,
             rebalance_freq=REBALANCE_FREQ,
             start_capital=START_CAPITAL,
@@ -43,6 +44,7 @@ def evaluate_strategy(params):
             'slope': slope,
             'r2': r2,
             'stop_loss': stop_loss,
+            'slope_stop': slope_stop,
             'atr': atr,
             'final_balance': final_balance,
             'roi': roi
@@ -69,11 +71,12 @@ def main():
     # 2. Define Parameter Grid
     # Refined grid based on previous best (Lookback ~21, Slope ~0.03, R2 ~0.60)
     param_grid = {
-        'lookback': [18, 20, 21, 22, 24],
-        'slope': [0.025, 0.028, 0.030, 0.032, 0.035],
-        'r2': [0.50, 0.55, 0.60, 0.65, 0.70],
-        'stop_loss': [0.04, 0.05, 0.06, 0.07, 0.08],
-        'atr': [0.07, 0.08, 0.09, 0.10]
+        'lookback': [15, 20, 25, 30],
+        'slope': [0.005, 0.01, 0.02, 0.03],
+        'r2': [0.50, 0.60, 0.70],
+        'stop_loss': [0.05, 0.10, 0.15],
+        'atr': [0.06, 0.08, 0.10],
+        'slope_stop': [0.0, 0.5, 1.0, 1.5]
     }
     
     keys = param_grid.keys()
@@ -110,11 +113,11 @@ def main():
     print("\n--- TOP 10 STRATEGIES ---")
     results.sort(key=lambda x: x['roi'], reverse=True)
     
-    print(f"{'RANK':<5} {'ROI (%)':<10} {'BALANCE':<15} {'LOOKBACK':<10} {'SLOPE':<10} {'R2':<10} {'STOP_LOSS':<10} {'ATR':<10}")
-    print("-" * 90)
+    print(f"{'RANK':<5} {'ROI (%)':<10} {'BALANCE':<15} {'LOOK':<6} {'SLOPE':<8} {'R2':<6} {'STOP':<6} {'S-STOP':<8} {'ATR':<6}")
+    print("-" * 95)
     
-    for i, res in enumerate(results[:10]):
-        print(f"{i+1:<5} {res['roi']:<10.2f} {res['final_balance']:<15,.2f} {res['lookback']:<10} {res['slope']:<10.4f} {res['r2']:<10.2f} {res['stop_loss']:<10.2f} {res['atr']:<10.2f}")
+    for i, res in enumerate(results[:15]):
+        print(f"{i+1:<5} {res['roi']:<10.2f} {res['final_balance']:<15,.2f} {res['lookback']:<6} {res['slope']:<8.4f} {res['r2']:<6.2f} {res['stop_loss']:<6.2f} {res['slope_stop']:<8.2f} {res['atr']:<6.2f}")
 
     # 5. Save best params to a file (Optional)
     if results:
@@ -124,6 +127,7 @@ def main():
         print(f"Slope: {best['slope']}")
         print(f"R2: {best['r2']}")
         print(f"Stop Loss: {best['stop_loss']}")
+        print(f"Slope Stop: {best['slope_stop']}")
         print(f"ATR Limit: {best['atr']}")
 
 if __name__ == "__main__":

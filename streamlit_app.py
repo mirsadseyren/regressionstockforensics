@@ -13,7 +13,7 @@ from regression import (
     get_vectorized_metrics, get_clean_data,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
     STOP_LOSS_RATE, REBALANCE_FREQ, START_CAPITAL, COMMISSION_RATE,
-    MAX_ATR_PERCENT
+    MAX_ATR_PERCENT, SLOPE_STOP_FACTOR
 )
 
 st.set_page_config(page_title="Regression Bot Dashboard", layout="wide")
@@ -29,6 +29,7 @@ min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
 stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
 
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
+slope_stop_factor = st.sidebar.slider("Slope Stop Factor (Eğim Katsayısı)", min_value=0.0, max_value=2.0, value=float(SLOPE_STOP_FACTOR), step=0.1, help="0: Kapalı, 1.0: Regresyon çizgisini takip eder. Hisse regresyonun altında kalırsa satılır.")
 start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
 # --- VERİ YÜKLEME ---
@@ -180,6 +181,7 @@ with tab2:
                 min_slope=min_slope,
                 min_r2=min_r2,
                 stop_loss_rate=stop_loss,
+                slope_stop_factor=slope_stop_factor,
                 start_capital=start_capital,
                 max_atr_percent=atr_limit,
                 progress_callback=p_callback
@@ -196,7 +198,7 @@ with tab2:
         successful_trades = 0
         unsuccessful_trades = 0
         for trade in trade_history:
-            if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
+            if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP', 'SLOPE STOP']:
                 if "P/L: %" in trade[6]:
                     try:
                         pl_val = float(trade[6].split('P/L: %')[1].split()[0].split('|')[0].strip())
@@ -248,7 +250,7 @@ with tab2:
             df_hist = pd.DataFrame(trade_history, columns=["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"])
             
             def style_trades(row):
-                if row['İşlem'] in ['SATIS', 'STOP LOSS', 'HACIM STOP']:
+                if row['İşlem'] in ['SATIS', 'STOP LOSS', 'HACIM STOP', 'SLOPE STOP']:
                     info = row['Bilgi']
                     if 'P/L: %-' in info:
                         return ['background-color: #ff4b4b; color: white; font-weight: bold'] * len(row) # Kırmızı

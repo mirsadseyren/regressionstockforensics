@@ -22,8 +22,9 @@ REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
 LOOKBACK_DAYS = 30  # Regresyon için geriye dönük gün sayısı
 MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.005   # Günlük asgari büyüme hızı (0.5%)
-STOP_LOSS_RATE = 0.10 # %15 Stop Loss
+STOP_LOSS_RATE = 0.10 # %10 Stop Loss
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
+SLOPE_STOP_FACTOR = 0.0 # Eğim Stop Katsayısı (0.0: Kapalı, 1.0: Regresyon çizgisini takip eder)
 
 
 def get_tickers_from_file(file_path):
@@ -242,7 +243,7 @@ if __name__ == "__main__":
     
     # Veri Ayrıştırma (Simülasyon İçin Loop Dışında Lazım)
 def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
-                   stop_loss_rate=STOP_LOSS_RATE,
+                   stop_loss_rate=STOP_LOSS_RATE, slope_stop_factor=SLOPE_STOP_FACTOR,
                    rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE,
                    max_atr_percent=MAX_ATR_PERCENT, progress_callback=None, silent=False):
                    
@@ -325,7 +326,15 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 if lots > 0:
                     cost = lots * buy_price
                     current_cash -= cost * (1 + commission_rate)
-                    active_portfolio.append({'t': top_pick['t'], 'l': lots, 'b': buy_price, 'max_p': buy_price})
+                    active_portfolio.append({
+                        't': top_pick['t'], 
+                        'l': lots, 
+                        'b': buy_price, 
+                        'max_p': buy_price, 
+                        'slope': top_pick['slope'], 
+                        'buy_dt': start_date,
+                        'days_held': 0
+                    })
                     
                     trade_history.append([
                         start_date.strftime('%Y-%m-%d'), top_pick['t'].replace('.IS',''), lots,
@@ -360,9 +369,28 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                     ])
                     continue
                 
+                # 2. Eğim Stopu (Derivative Stop)
+                if slope_stop_factor > 0:
+                    # Alımdan sonraki gün sayısını hesapla (Trading günleri)
+                    # slope_stop_price = buy_price * e^(slope * days * factor)
+                    slope_stop_p = item['b'] * np.exp(item['slope'] * item['days_held'] * slope_stop_factor)
+                    
+                    if curr_p < slope_stop_p:
+                        sell_val = item['l'] * curr_p * (1 - commission_rate)
+                        current_cash += sell_val
+                        active_portfolio.remove(item)
+                        pl_pct = (curr_p / item['b'] - 1) * 100
+                        trade_history.append([
+                            dt.strftime('%Y-%m-%d'), item['t'].replace('.IS',''), item['l'],
+                            f"{curr_p:.2f}", "SLOPE STOP", f"{current_cash:,.2f}", 
+                            f"P/L: %{pl_pct:.2f} | Floor: {slope_stop_p:.2f}"
+                        ])
+                        continue
 
-            
-            # 2. Portföy Değeri
+                # Gün sayısını artır
+                item['days_held'] += 1
+
+            # 3. Portföy Değeri
             port_value = current_cash
             for item in active_portfolio:
                 curr_p = period_prices.at[dt, item['t']]
