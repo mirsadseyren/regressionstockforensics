@@ -24,7 +24,7 @@ MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.005   # Günlük asgari büyüme hızı (0.5%)
 STOP_LOSS_RATE = 0.10 # %10 Stop Loss
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
-SLOPE_STOP_FACTOR = 0.0 # Eğim Stop Katsayısı (0.0: Kapalı, 1.0: Regresyon çizgisini takip eder)
+SLOPE_STOP_FACTOR = 0.0 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
 
 
 def get_tickers_from_file(file_path):
@@ -369,11 +369,10 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                     ])
                     continue
                 
-                # 2. Eğim Stopu (Derivative Stop)
-                if slope_stop_factor > 0:
-                    # Alımdan sonraki gün sayısını hesapla (Trading günleri)
-                    # slope_stop_price = buy_price * e^(slope * days * factor)
-                    slope_stop_p = item['b'] * np.exp(item['slope'] * item['days_held'] * slope_stop_factor)
+                # 2. Günlük Minimum Getiri Stopu (Fixed Daily Return Stop)
+                if slope_stop_factor != 0:
+                    # slope_stop_price = buy_price * (1 + daily_return_target)^days_held
+                    slope_stop_p = item['b'] * ((1 + slope_stop_factor) ** item['days_held'])
                     
                     if curr_p < slope_stop_p:
                         sell_val = item['l'] * curr_p * (1 - commission_rate)

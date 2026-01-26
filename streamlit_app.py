@@ -29,7 +29,8 @@ min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
 stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
 
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
-slope_stop_factor = st.sidebar.slider("Slope Stop Factor (Eğim Katsayısı)", min_value=0.0, max_value=2.0, value=float(SLOPE_STOP_FACTOR), step=0.1, help="0: Kapalı, 1.0: Regresyon çizgisini takip eder. Hisse regresyonun altında kalırsa satılır.")
+slope_stop_pct = st.sidebar.slider("Daily Min Return Stop (%)", min_value=-10.0, max_value=10.0, value=float(SLOPE_STOP_FACTOR * 100), step=0.1, help="Hissenin her gün yapması gereken minimum yüzde değişim. Bu değerin altında kalırsa satılır.")
+slope_stop_factor = slope_stop_pct / 100.0
 start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
 # --- VERİ YÜKLEME ---
