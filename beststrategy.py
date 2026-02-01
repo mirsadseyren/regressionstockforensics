@@ -19,9 +19,9 @@ def init_worker(shared_data):
 def evaluate_strategy(params):
     """
     Worker function to run a single simulation with given parameters.
-    params: (lookback, slope, r2, stop_loss, atr)
+    params: (lookback, slope, r2, stop_loss, atr, slope_stop, rebalance)
     """
-    lookback, slope, r2, stop_loss, atr, slope_stop = params
+    lookback, slope, r2, stop_loss, atr, slope_stop, rebalance = params
     
     try:
         daily_vals, _, final_balance = run_simulation(
@@ -32,7 +32,7 @@ def evaluate_strategy(params):
             stop_loss_rate=stop_loss,
             slope_stop_factor=slope_stop,
             max_atr_percent=atr,
-            rebalance_freq=REBALANCE_FREQ,
+            rebalance_freq=rebalance,
             start_capital=START_CAPITAL,
             commission_rate=COMMISSION_RATE,
             silent=True
@@ -46,6 +46,7 @@ def evaluate_strategy(params):
             'stop_loss': stop_loss,
             'slope_stop': slope_stop,
             'atr': atr,
+            'rebalance': rebalance,
             'final_balance': final_balance,
             'roi': roi
         }
@@ -76,7 +77,8 @@ def main():
         'r2': [0.50, 0.60, 0.70],
         'stop_loss': [0.05, 0.10, 0.15],
         'atr': [0.06, 0.08, 0.10],
-        'slope_stop': [0.0, 0.002, 0.005, 0.01]
+        'slope_stop': [0.0, 0.002, 0.005, 0.01],
+        'rebalance': ['1D', '3D', '5D', '7D']
     }
     
     keys = param_grid.keys()
@@ -114,11 +116,11 @@ def main():
     print("\n--- TOP 10 STRATEGIES ---")
     results.sort(key=lambda x: x['roi'], reverse=True)
     
-    print(f"{'RANK':<5} {'ROI (%)':<10} {'BALANCE':<15} {'LOOK':<6} {'SLOPE':<8} {'R2':<6} {'STOP':<6} {'S-STOP':<8} {'ATR':<6}")
-    print("-" * 95)
+    print(f"{'RANK':<5} {'ROI (%)':<10} {'BALANCE':<15} {'LOOK':<6} {'SLOPE':<8} {'R2':<6} {'STOP':<6} {'S-STOP':<8} {'ATR':<6} {'REBAL':<6}")
+    print("-" * 105)
     
     for i, res in enumerate(results[:15]):
-        print(f"{i+1:<5} {res['roi']:<10.2f} {res['final_balance']:<15,.2f} {res['lookback']:<6} {res['slope']:<8.4f} {res['r2']:<6.2f} {res['stop_loss']:<6.2f} {res['slope_stop']:<8.2f} {res['atr']:<6.2f}")
+        print(f"{i+1:<5} {res['roi']:<10.2f} {res['final_balance']:<15,.2f} {res['lookback']:<6} {res['slope']:<8.4f} {res['r2']:<6.2f} {res['stop_loss']:<6.2f} {res['slope_stop']:<8.2f} {res['atr']:<6.2f} {res['rebalance']:<6}")
 
     # 5. Save best params to a file (Optional)
     if results:
@@ -130,8 +132,8 @@ def main():
         print(f"Stop Loss: {best['stop_loss']}")
         print(f"Slope Stop: {best['slope_stop']}")
         print(f"ATR Limit: {best['atr']}")
+        print(f"Rebalance Freq: {best['rebalance']}")
 
 if __name__ == "__main__":
-    # Windows support for multiprocessing
     multiprocessing.freeze_support()
     main()
