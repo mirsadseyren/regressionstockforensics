@@ -58,7 +58,7 @@ def main():
     # Columns to prioritize for "success": Monthly, Weekly, 3-Month
     # Let's sort by Monthly descending order for "momentum"
     
-    df_sorted = df.sort_values(by='aylik', ascending=False)
+    df_sorted = df.sort_values(by='bir_yillik', ascending=False)
     
     print("\n--- En Başarılı Endeksler (Aylık Yüzde Artışa Göre) ---")
     
