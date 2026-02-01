@@ -29,7 +29,6 @@ LOOKBACK_DAYS = 24  # Regresyon için geriye dönük gün sayısı
 MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.027   # Günlük asgari büyüme hızı (0.5%)
 STOP_LOSS_RATE = 0.5 # %10 Stop Loss
->>>>>>> 379f80900d6c5df790fcb6a0226ecd456bbbd9c2
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
 SLOPE_STOP_FACTOR = 0.0 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
 
