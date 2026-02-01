@@ -16,13 +16,13 @@ warnings.filterwarnings('ignore')
 # ==========================================================
 STOX_FILE = 'top_endeks_hisseleri.txt'
 DATA_CACHE_FILE = 'bist_data_cache.pkl'
-START_CAPITAL = 19000
+START_CAPITAL = 100000
 COMMISSION_RATE = 0.005
 REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
-LOOKBACK_DAYS = 24  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
-MIN_SLOPE = 0.027   # Günlük asgari büyüme hızı (0.5%)
-STOP_LOSS_RATE = 0.5 # %10 Stop Loss
+LOOKBACK_DAYS = 25  # Regresyon için geriye dönük gün sayısı
+MIN_R_SQUARED = 0.70 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
+MIN_SLOPE = 0.0300  # Günlük asgari büyüme hızı (0.5%)
+STOP_LOSS_RATE = 0.10 # %10 Stop Loss
 MAX_ATR_PERCENT = 0.08 # Yüzdesel oynaklık limiti (ATR/Fiyat)
 SLOPE_STOP_FACTOR = 0.0 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
 
