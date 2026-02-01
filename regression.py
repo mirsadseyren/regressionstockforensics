@@ -19,12 +19,6 @@ DATA_CACHE_FILE = 'bist_data_cache.pkl'
 START_CAPITAL = 19000
 COMMISSION_RATE = 0.005
 REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
-<<<<<<< HEAD
-LOOKBACK_DAYS = 30  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
-MIN_SLOPE = 0.025   # Günlük asgari büyüme hızı (0.5%)
-STOP_LOSS_RATE = 0.10 # %10 Stop Loss
-=======
 LOOKBACK_DAYS = 24  # Regresyon için geriye dönük gün sayısı
 MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
 MIN_SLOPE = 0.027   # Günlük asgari büyüme hızı (0.5%)
