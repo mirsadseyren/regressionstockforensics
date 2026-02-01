@@ -1,4 +1,4 @@
-
+from tqdm import tqdm
 import multiprocessing
 import itertools
 import time
@@ -97,14 +97,15 @@ def main():
         # Chunksize adjustment might help performance
         chunk_size = max(1, len(combinations) // (num_workers * 4))
         
-        for i, res in enumerate(pool.imap_unordered(evaluate_strategy, combinations, chunksize=chunk_size)):
+        # tqdm progress bar
+        pbar = tqdm(total=len(combinations), desc="Optimizing")
+        
+        for res in pool.imap_unordered(evaluate_strategy, combinations, chunksize=chunk_size):
             if 'error' not in res:
                 results.append(res)
+            pbar.update(1)
             
-            # Simple progress bar
-            progress = (i + 1) / len(combinations) * 100
-            sys.stdout.write(f"\rProgress: {progress:.1f}% ({i+1}/{len(combinations)})")
-            sys.stdout.flush()
+        pbar.close()
             
     print("\nOptimization Finished!")
     print(f"Time Elapsed: {time.time() - start_time:.2f} seconds")

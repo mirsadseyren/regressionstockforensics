@@ -8,3 +8,6 @@ openpyxl
 streamlit>=1.42.0
 plotly
 
+
+requests
+beautifulsoup4

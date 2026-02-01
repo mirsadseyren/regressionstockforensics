@@ -1,0 +1,702 @@
+{
+    "XU100": {
+        "gunluk": "+%0,05",
+        "haftalik": "+%6,51",
+        "aylik": "+%22,88",
+        "uc_aylik": "+%26,13",
+        "alti_aylik": "+%28,81",
+        "bir_yillik": "+%38,32",
+        "bes_yillik": "+%839,18",
+        "maximum": "+15,38Mln%"
+    },
+    "XU050": {
+        "gunluk": "-%0,40",
+        "haftalik": "+%5,91",
+        "aylik": "+%22,67",
+        "uc_aylik": "+%26,21",
+        "alti_aylik": "+%26,56",
+        "bir_yillik": "+%35,01",
+        "bes_yillik": "+%821,57",
+        "maximum": "+7,78B%"
+    },
+    "XU030": {
+        "gunluk": "-%0,25",
+        "haftalik": "+%6,53",
+        "aylik": "+%23,76",
+        "uc_aylik": "+%26,69",
+        "alti_aylik": "+%26,95",
+        "bir_yillik": "+%36,02",
+        "bes_yillik": "+%862,11",
+        "maximum": "+153,17B%"
+    },
+    "XYUZO": {
+        "gunluk": "+%0,80",
+        "haftalik": "+%6,47",
+        "aylik": "+%20,81",
+        "uc_aylik": "+%24,86",
+        "alti_aylik": "+%34,13",
+        "bir_yillik": "+%44,35",
+        "bes_yillik": "+%778,16",
+        "maximum": "+9,07B%"
+    },
+    "XUTUM": {
+        "gunluk": "-%0,07",
+        "haftalik": "+%5,23",
+        "aylik": "+%18,62",
+        "uc_aylik": "+%19,27",
+        "alti_aylik": "+%27,44",
+        "bir_yillik": "+%45,75",
+        "bes_yillik": "+%890,24",
+        "maximum": "+170,09B%"
+    },
+    "XTUMY": {
+        "gunluk": "-%0,41",
+        "haftalik": "+%1,62",
+        "aylik": "+%7,57",
+        "uc_aylik": "+%3,05",
+        "alti_aylik": "+%23,24",
+        "bir_yillik": "+%69,34",
+        "bes_yillik": "+1,03B%",
+        "maximum": "+22,11B%"
+    },
+    "XBLSM": {
+        "gunluk": "-%0,59",
+        "haftalik": "+%0,54",
+        "aylik": "+%10,03",
+        "uc_aylik": "+%2,13",
+        "alti_aylik": "+%5,51",
+        "bir_yillik": "+%17,37",
+        "bes_yillik": "+%531,74",
+        "maximum": "+3,74B%"
+    },
+    "XTRZM": {
+        "gunluk": "-%0,66",
+        "haftalik": "+%5,12",
+        "aylik": "+%13,19",
+        "uc_aylik": "-%6,94",
+        "alti_aylik": "+%8,67",
+        "bir_yillik": "+%43,39",
+        "bes_yillik": "+%367,35",
+        "maximum": "+17,84B%"
+    },
+    "XTCRT": {
+        "gunluk": "-%0,76",
+        "haftalik": "+%3,73",
+        "aylik": "+%18,57",
+        "uc_aylik": "+%21,61",
+        "alti_aylik": "+%21,81",
+        "bir_yillik": "+%21,05",
+        "bes_yillik": "+%756,15",
+        "maximum": "+299,46B%"
+    },
+    "XILTM": {
+        "gunluk": "+%0,08",
+        "haftalik": "+%3,62",
+        "aylik": "+%23,33",
+        "uc_aylik": "+%19,80",
+        "alti_aylik": "+%25,11",
+        "bir_yillik": "+%12,00",
+        "bes_yillik": "+%652,70",
+        "maximum": "+5,97B%"
+    },
+    "XSPOR": {
+        "gunluk": "-%0,46",
+        "haftalik": "-%2,72",
+        "aylik": "-%0,10",
+        "uc_aylik": "-%16,61",
+        "alti_aylik": "-%19,88",
+        "bir_yillik": "-%39,79",
+        "bes_yillik": "+%105,03",
+        "maximum": "+%914,94"
+    },
+    "XBANK": {
+        "gunluk": "+%2,84",
+        "haftalik": "+%10,54",
+        "aylik": "+%21,04",
+        "uc_aylik": "+%34,40",
+        "alti_aylik": "+%24,35",
+        "bir_yillik": "+%34,03",
+        "bes_yillik": "+1,30B%",
+        "maximum": "+213,79B%"
+    },
+    "XSGRT": {
+        "gunluk": "+%1,67",
+        "haftalik": "+%1,87",
+        "aylik": "+%14,25",
+        "uc_aylik": "+%11,68",
+        "alti_aylik": "+%23,02",
+        "bir_yillik": "+%19,64",
+        "bes_yillik": "+1,06B%",
+        "maximum": "+844,72B%"
+    },
+    "XFINK": {
+        "gunluk": "+%0,11",
+        "haftalik": "+%11,48",
+        "aylik": "+%37,19",
+        "uc_aylik": "+%23,13",
+        "alti_aylik": "+%45,42",
+        "bir_yillik": "+%540,50",
+        "bes_yillik": "+2,31B%",
+        "maximum": "+274,09B%"
+    },
+    "XHOLD": {
+        "gunluk": "+%1,92",
+        "haftalik": "+%9,42",
+        "aylik": "+%20,08",
+        "uc_aylik": "+%29,42",
+        "alti_aylik": "+%53,86",
+        "bir_yillik": "+%79,02",
+        "bes_yillik": "+1,07B%",
+        "maximum": "+170,38B%"
+    },
+    "XGMYO": {
+        "gunluk": "+%0,45",
+        "haftalik": "+%0,90",
+        "aylik": "+%8,27",
+        "uc_aylik": "+%5,70",
+        "alti_aylik": "+%25,50",
+        "bir_yillik": "+%71,60",
+        "bes_yillik": "+%785,48",
+        "maximum": "+2,85B%"
+    },
+    "XUTEK": {
+        "gunluk": "-%3,98",
+        "haftalik": "+%0,70",
+        "aylik": "+%25,31",
+        "uc_aylik": "+%34,26",
+        "alti_aylik": "+%43,25",
+        "bir_yillik": "+%136,22",
+        "bes_yillik": "+1,71B%",
+        "maximum": "+24,77B%"
+    },
+    "XUMAL": {
+        "gunluk": "+%1,93",
+        "haftalik": "+%8,36",
+        "aylik": "+%19,35",
+        "uc_aylik": "+%24,98",
+        "alti_aylik": "+%38,31",
+        "bir_yillik": "+%65,86",
+        "bes_yillik": "+1,16B%",
+        "maximum": "+5,91Mln%"
+    },
+    "XLBNK": {
+        "gunluk": "+%2,54",
+        "haftalik": "+%9,54",
+        "aylik": "+%19,76",
+        "uc_aylik": "+%34,12",
+        "alti_aylik": "+%23,52",
+        "bir_yillik": "+%34,11",
+        "bes_yillik": "+1,33B%",
+        "maximum": "+1,35B%"
+    },
+    "XKOBI": {
+        "gunluk": "+%1,12",
+        "haftalik": "-%2,12",
+        "aylik": "-%4,30",
+        "uc_aylik": "-%3,35",
+        "alti_aylik": "+%13,36",
+        "bir_yillik": "+%52,37",
+        "bes_yillik": "+%637,64",
+        "maximum": "+5,57B%"
+    },
+    "XINSA": {
+        "gunluk": "+%1,81",
+        "haftalik": "+%8,14",
+        "aylik": "+%14,72",
+        "uc_aylik": "+%12,48",
+        "alti_aylik": "+%17,48",
+        "bir_yillik": "+%71,33",
+        "bes_yillik": "+1,16B%",
+        "maximum": "+3,87B%"
+    },
+    "XELKT": {
+        "gunluk": "-%1,57",
+        "haftalik": "+%2,87",
+        "aylik": "+%8,05",
+        "uc_aylik": "+%6,00",
+        "alti_aylik": "+%20,43",
+        "bir_yillik": "+%43,27",
+        "bes_yillik": "+%669,59",
+        "maximum": "+6,85B%"
+    },
+    "XUSIN": {
+        "gunluk": "-%1,30",
+        "haftalik": "+%4,74",
+        "aylik": "+%19,88",
+        "uc_aylik": "+%17,05",
+        "alti_aylik": "+%22,89",
+        "bir_yillik": "+%32,84",
+        "bes_yillik": "+%578,19",
+        "maximum": "+5,09Mln%"
+    },
+    "XGIDA": {
+        "gunluk": "+%0,37",
+        "haftalik": "+%3,36",
+        "aylik": "+%18,02",
+        "uc_aylik": "+%23,40",
+        "alti_aylik": "+%27,57",
+        "bir_yillik": "+%36,10",
+        "bes_yillik": "+%581,62",
+        "maximum": "+136,29B%"
+    },
+    "XTEKS": {
+        "gunluk": "+%1,24",
+        "haftalik": "+%2,07",
+        "aylik": "+%2,64",
+        "uc_aylik": "+%4,45",
+        "alti_aylik": "+%27,49",
+        "bir_yillik": "+%39,07",
+        "bes_yillik": "+%389,05",
+        "maximum": "+46,33B%"
+    },
+    "XKAGT": {
+        "gunluk": "-%0,74",
+        "haftalik": "-%3,60",
+        "aylik": "+%9,24",
+        "uc_aylik": "+%1,09",
+        "alti_aylik": "+%5,22",
+        "bir_yillik": "+%35,25",
+        "bes_yillik": "+%264,72",
+        "maximum": "+71,91B%"
+    },
+    "XKMYA": {
+        "gunluk": "-%1,34",
+        "haftalik": "+%5,76",
+        "aylik": "+%20,41",
+        "uc_aylik": "+%12,45",
+        "alti_aylik": "+%27,40",
+        "bir_yillik": "+%38,02",
+        "bes_yillik": "+%704,20",
+        "maximum": "+144,93B%"
+    },
+    "XTAST": {
+        "gunluk": "-%0,36",
+        "haftalik": "+%3,75",
+        "aylik": "+%15,03",
+        "uc_aylik": "+%8,05",
+        "alti_aylik": "+%3,52",
+        "bir_yillik": "+%3,70",
+        "bes_yillik": "+%609,29",
+        "maximum": "+139,19B%"
+    },
+    "XMANA": {
+        "gunluk": "-%2,48",
+        "haftalik": "+%7,47",
+        "aylik": "+%26,15",
+        "uc_aylik": "+%20,24",
+        "alti_aylik": "+%24,88",
+        "bir_yillik": "+%44,46",
+        "bes_yillik": "+%423,20",
+        "maximum": "+211,05B%"
+    },
+    "XULAS": {
+        "gunluk": "-%0,51",
+        "haftalik": "-%0,09",
+        "aylik": "+%12,31",
+        "uc_aylik": "+%4,57",
+        "alti_aylik": "+%4,86",
+        "bir_yillik": "+%3,87",
+        "bes_yillik": "+2,28B%",
+        "maximum": "+368,91B%"
+    },
+    "XMESY": {
+        "gunluk": "-%0,36",
+        "haftalik": "+%3,22",
+        "aylik": "+%17,86",
+        "uc_aylik": "+%13,30",
+        "alti_aylik": "+%10,16",
+        "bir_yillik": "+%16,34",
+        "bes_yillik": "+%533,90",
+        "maximum": "+222,98B%"
+    },
+    "XUHIZ": {
+        "gunluk": "-%0,34",
+        "haftalik": "+%2,77",
+        "aylik": "+%14,26",
+        "uc_aylik": "+%9,71",
+        "alti_aylik": "+%14,11",
+        "bir_yillik": "+%20,35",
+        "bes_yillik": "+%897,72",
+        "maximum": "+115,25B%"
+    },
+    "XUSRD": {
+        "gunluk": "+%0,10",
+        "haftalik": "+%5,79",
+        "aylik": "+%20,79",
+        "uc_aylik": "+%23,12",
+        "alti_aylik": "+%23,63",
+        "bir_yillik": "+%31,62",
+        "bes_yillik": "+%972,29",
+        "maximum": "+1,74B%"
+    },
+    "ISIST": {
+        "gunluk": "+%0,98",
+        "haftalik": "+%8,25",
+        "aylik": "+%19,19",
+        "uc_aylik": "+%20,83",
+        "alti_aylik": "+%16,32",
+        "bir_yillik": "+%15,63",
+        "bes_yillik": "+%945,62",
+        "maximum": "-%71,66"
+    },
+    "XAKUR": {
+        "gunluk": "+%1,75",
+        "haftalik": "+%11,15",
+        "aylik": "+%19,91",
+        "uc_aylik": "-%2,42",
+        "alti_aylik": "+%55,55",
+        "bir_yillik": "+%168,91",
+        "bes_yillik": "+1,95B%",
+        "maximum": "+3,03B%"
+    },
+    "XU500": {
+        "gunluk": "-%0,07",
+        "haftalik": "+%5,31",
+        "aylik": "+%18,69",
+        "uc_aylik": "+%19,34",
+        "alti_aylik": "+%27,13",
+        "bir_yillik": "+%44,88",
+        "bes_yillik": "-",
+        "maximum": "+%90,48"
+    },
+    "XYLDZ": {
+        "gunluk": "-%0,05",
+        "haftalik": "+%5,87",
+        "aylik": "+%21,45",
+        "uc_aylik": "+%24,72",
+        "alti_aylik": "+%28,70",
+        "bir_yillik": "+%42,30",
+        "bes_yillik": "+%899,39",
+        "maximum": "+1,94B%"
+    },
+    "XSDNZ": {
+        "gunluk": "+%1,00",
+        "haftalik": "+%3,50",
+        "aylik": "+%8,78",
+        "uc_aylik": "+%20,82",
+        "alti_aylik": "+%11,89",
+        "bir_yillik": "+%30,15",
+        "bes_yillik": "+%211,22",
+        "maximum": "+1,51B%"
+    },
+    "X030S": {
+        "gunluk": "-%0,16",
+        "haftalik": "+%6,63",
+        "aylik": "+%23,64",
+        "uc_aylik": "+%26,47",
+        "alti_aylik": "+%26,91",
+        "bir_yillik": "+%35,95",
+        "bes_yillik": "+%866,11",
+        "maximum": "+1,57B%"
+    },
+    "X100S": {
+        "gunluk": "+%0,05",
+        "haftalik": "+%6,51",
+        "aylik": "+%22,88",
+        "uc_aylik": "+%26,13",
+        "alti_aylik": "+%28,76",
+        "bir_yillik": "+%38,32",
+        "bes_yillik": "+%827,22",
+        "maximum": "+1,72B%"
+    },
+    "XSD25": {
+        "gunluk": "+%0,18",
+        "haftalik": "+%6,78",
+        "aylik": "+%23,29",
+        "uc_aylik": "+%26,32",
+        "alti_aylik": "+%25,67",
+        "bir_yillik": "+%28,76",
+        "bes_yillik": "-",
+        "maximum": "+%252,88"
+    },
+    "XMADN": {
+        "gunluk": "-%6,38",
+        "haftalik": "+%7,12",
+        "aylik": "+%33,09",
+        "uc_aylik": "+%68,84",
+        "alti_aylik": "+%84,17",
+        "bir_yillik": "+%131,73",
+        "bes_yillik": "+%854,47",
+        "maximum": "+2,36B%"
+    },
+    "X10XB": {
+        "gunluk": "-%1,59",
+        "haftalik": "+%3,89",
+        "aylik": "+%23,30",
+        "uc_aylik": "+%20,98",
+        "alti_aylik": "+%25,79",
+        "bir_yillik": "+%40,08",
+        "bes_yillik": "+%889,46",
+        "maximum": "+1,28B%"
+    },
+    "X100C": {
+        "gunluk": "+%0,05",
+        "haftalik": "+%6,51",
+        "aylik": "+%22,88",
+        "uc_aylik": "+%26,13",
+        "alti_aylik": "+%28,76",
+        "bir_yillik": "+%38,32",
+        "bes_yillik": "+%827,22",
+        "maximum": "-%86,40"
+    },
+    "X030C": {
+        "gunluk": "-%0,25",
+        "haftalik": "+%6,53",
+        "aylik": "+%23,76",
+        "uc_aylik": "+%26,69",
+        "alti_aylik": "+%27,10",
+        "bir_yillik": "+%36,02",
+        "bes_yillik": "+%854,74",
+        "maximum": "-%87,32"
+    },
+    "XKTUM": {
+        "gunluk": "-%2,01",
+        "haftalik": "+%3,74",
+        "aylik": "+%21,33",
+        "uc_aylik": "+%20,49",
+        "alti_aylik": "+%29,64",
+        "bir_yillik": "+%62,85",
+        "bes_yillik": "-",
+        "maximum": "+%902,02"
+    },
+    "XK100": {
+        "gunluk": "-%1,61",
+        "haftalik": "+%3,38",
+        "aylik": "+%18,40",
+        "uc_aylik": "+%15,62",
+        "alti_aylik": "+%23,77",
+        "bir_yillik": "+%58,19",
+        "bes_yillik": "-",
+        "maximum": "+%819,84"
+    },
+    "XK050": {
+        "gunluk": "-%1,76",
+        "haftalik": "+%3,48",
+        "aylik": "+%19,12",
+        "uc_aylik": "+%16,99",
+        "alti_aylik": "+%27,49",
+        "bir_yillik": "+%56,83",
+        "bes_yillik": "-",
+        "maximum": "+%822,60"
+    },
+    "XK030": {
+        "gunluk": "-%1,85",
+        "haftalik": "+%3,79",
+        "aylik": "+%20,63",
+        "uc_aylik": "+%20,62",
+        "alti_aylik": "+%28,59",
+        "bir_yillik": "+%51,83",
+        "bes_yillik": "-",
+        "maximum": "+%796,48"
+    },
+    "XSRDK": {
+        "gunluk": "-%0,79",
+        "haftalik": "+%4,06",
+        "aylik": "+%17,94",
+        "uc_aylik": "+%16,30",
+        "alti_aylik": "+%20,85",
+        "bir_yillik": "+%41,90",
+        "bes_yillik": "-",
+        "maximum": "+%902,92"
+    },
+    "XSANK": {
+        "gunluk": "-%3,19",
+        "haftalik": "+%0,62",
+        "aylik": "+%20,42",
+        "uc_aylik": "+%30,47",
+        "alti_aylik": "+%40,29",
+        "bir_yillik": "+%101,57",
+        "bes_yillik": "+1,60B%",
+        "maximum": "+14,82B%"
+    },
+    "XSIZM": {
+        "gunluk": "-%2,18",
+        "haftalik": "+%2,48",
+        "aylik": "+%13,83",
+        "uc_aylik": "+%16,59",
+        "alti_aylik": "+%21,46",
+        "bir_yillik": "+%41,23",
+        "bes_yillik": "+%424,63",
+        "maximum": "+7,29B%"
+    },
+    "XTMTU": {
+        "gunluk": "-%0,27",
+        "haftalik": "+%5,85",
+        "aylik": "+%23,11",
+        "uc_aylik": "+%26,87",
+        "alti_aylik": "+%29,57",
+        "bir_yillik": "+%40,67",
+        "bes_yillik": "+%848,58",
+        "maximum": "+2,32B%"
+    },
+    "XSBAL": {
+        "gunluk": "+%0,95",
+        "haftalik": "+%5,75",
+        "aylik": "+%17,44",
+        "uc_aylik": "-%7,02",
+        "alti_aylik": "+%19,54",
+        "bir_yillik": "+%21,60",
+        "bes_yillik": "+%348,69",
+        "maximum": "-%76,81"
+    },
+    "XKURY": {
+        "gunluk": "-%0,50",
+        "haftalik": "+%4,50",
+        "aylik": "+%20,77",
+        "uc_aylik": "+%23,80",
+        "alti_aylik": "+%28,52",
+        "bir_yillik": "+%47,81",
+        "bes_yillik": "+%881,49",
+        "maximum": "+2,45B%"
+    },
+    "XYORT": {
+        "gunluk": "-%0,25",
+        "haftalik": "+%1,84",
+        "aylik": "+%13,18",
+        "uc_aylik": "+%23,20",
+        "alti_aylik": "+%49,04",
+        "bir_yillik": "+%59,15",
+        "bes_yillik": "+%296,51",
+        "maximum": "+53,19B%"
+    },
+    "XSADA": {
+        "gunluk": "-%1,76",
+        "haftalik": "+%6,00",
+        "aylik": "-%5,82",
+        "uc_aylik": "-%15,42",
+        "alti_aylik": "-%29,42",
+        "bir_yillik": "-%21,62",
+        "bes_yillik": "+%437,21",
+        "maximum": "+15,68B%"
+    },
+    "XTM25": {
+        "gunluk": "+%0,79",
+        "haftalik": "+%7,69",
+        "aylik": "+%24,02",
+        "uc_aylik": "+%27,02",
+        "alti_aylik": "+%27,08",
+        "bir_yillik": "+%26,43",
+        "bes_yillik": "+%758,90",
+        "maximum": "+2,72B%"
+    },
+    "XSANT": {
+        "gunluk": "-%5,87",
+        "haftalik": "+%3,54",
+        "aylik": "+%6,67",
+        "uc_aylik": "-%20,87",
+        "alti_aylik": "-%1,64",
+        "bir_yillik": "+%47,82",
+        "bes_yillik": "+%366,00",
+        "maximum": "+5,03B%"
+    },
+    "XSBUR": {
+        "gunluk": "+%1,04",
+        "haftalik": "+%7,27",
+        "aylik": "+%24,60",
+        "uc_aylik": "+%26,54",
+        "alti_aylik": "+%44,78",
+        "bir_yillik": "+%48,41",
+        "bes_yillik": "+%471,18",
+        "maximum": "+8,40B%"
+    },
+    "XSIST": {
+        "gunluk": "+%1,04",
+        "haftalik": "+%6,02",
+        "aylik": "+%17,88",
+        "uc_aylik": "+%19,84",
+        "alti_aylik": "+%29,49",
+        "bir_yillik": "+%38,18",
+        "bes_yillik": "+1,01B%",
+        "maximum": "+6,54B%"
+    },
+    "XSKON": {
+        "gunluk": "-%3,16",
+        "haftalik": "-%5,03",
+        "aylik": "+%0,34",
+        "uc_aylik": "-%28,76",
+        "alti_aylik": "-%21,91",
+        "bir_yillik": "+%32,66",
+        "bes_yillik": "+%191,32",
+        "maximum": "+1,42B%"
+    },
+    "XSKAY": {
+        "gunluk": "-%2,30",
+        "haftalik": "-%0,40",
+        "aylik": "+%17,31",
+        "uc_aylik": "+%19,98",
+        "alti_aylik": "+%40,71",
+        "bir_yillik": "+%49,78",
+        "bes_yillik": "+%363,71",
+        "maximum": "+16,28B%"
+    },
+    "XSKOC": {
+        "gunluk": "-%1,71",
+        "haftalik": "+%8,91",
+        "aylik": "+%31,95",
+        "uc_aylik": "+%24,41",
+        "alti_aylik": "+%40,14",
+        "bir_yillik": "+%57,11",
+        "bes_yillik": "+%906,04",
+        "maximum": "+13,62B%"
+    },
+    "XSTKR": {
+        "gunluk": "-%2,47",
+        "haftalik": "-%1,51",
+        "aylik": "+%13,85",
+        "uc_aylik": "+%0,25",
+        "alti_aylik": "+%30,07",
+        "bir_yillik": "+%14,23",
+        "bes_yillik": "+%374,76",
+        "maximum": "+19,23B%"
+    },
+    "FTWITURL": {
+        "gunluk": "+%0,06",
+        "haftalik": "+%5,93",
+        "aylik": "+%21,14",
+        "uc_aylik": "+%25,13",
+        "alti_aylik": "+%27,99",
+        "bir_yillik": "+%37,66",
+        "bes_yillik": "+%847,00",
+        "maximum": "+%83,27"
+    },
+    "XTKJS": {
+        "gunluk": "-%1,76",
+        "haftalik": "+%0,42",
+        "aylik": "+%14,38",
+        "uc_aylik": "+%10,51",
+        "alti_aylik": "+%14,59",
+        "bir_yillik": "+%46,90",
+        "bes_yillik": "+%884,95",
+        "maximum": "+4,75B%"
+    },
+    "TLREF": {
+        "gunluk": "+%0,05",
+        "haftalik": "+%0,20",
+        "aylik": "-%3,02",
+        "uc_aylik": "-%6,16",
+        "alti_aylik": "-%13,74",
+        "bir_yillik": "-%17,24",
+        "bes_yillik": "+%112,32",
+        "maximum": "+%145,45"
+    },
+    "X030EA": {
+        "gunluk": "-%0,06",
+        "haftalik": "+%6,41",
+        "aylik": "+%22,62",
+        "uc_aylik": "+%27,37",
+        "alti_aylik": "+%28,09",
+        "bir_yillik": "+%39,74",
+        "bes_yillik": "+%857,91",
+        "maximum": "-%87,17"
+    },
+    "XHARZ": {
+        "gunluk": "-%0,37",
+        "haftalik": "+%4,86",
+        "aylik": "+%20,44",
+        "uc_aylik": "+%15,69",
+        "alti_aylik": "+%29,41",
+        "bir_yillik": "+%105,20",
+        "bes_yillik": "+2,23B%",
+        "maximum": "+24,74B%"
+    }
+}
