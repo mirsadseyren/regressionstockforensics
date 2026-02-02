@@ -82,11 +82,7 @@ if st.sidebar.button("🔄 Verileri Güncelle"):
     st.cache_data.clear()
     st.rerun()
 
-if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
-    # Input for number of indices (using session state/sidebar context if needed, but here simple input works)
-    # However since it's inside the button block it might not work well for input.
-    # Better to move input outside or use a trick. But standard way is input outside.
-    pass 
+
 
 # To make it cleaner, I will rewrite the button block and add the input just before it.
 num_indices = st.sidebar.number_input("Seçilecek Endeks Sayısı", min_value=1, max_value=50, value=10)
