@@ -2,7 +2,8 @@ import json
 import pandas as pd
 import os
 import re
-from endekshisseleri import indices_performance
+import sys
+# from endekshisseleri import indices_performance
 
 def parse_percentage(value):
     if not isinstance(value, str):
@@ -35,7 +36,7 @@ def parse_percentage(value):
     except ValueError:
         return None
 
-def leaderboard():
+def leaderboard(leaders=5):
     json_path = os.path.join(os.path.dirname(__file__), 'endeks_performans.json')
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -86,7 +87,7 @@ def leaderboard():
     print(df_display_weekly)
     
     # --- TASK: Extract tickers for top 5 monthly indices ---
-    top_5_indices = df_sorted.head(5)['Index'].tolist()
+    top_5_indices = df_sorted.head(leaders)['Index'].tolist()
     print(f"\nTop 5 Indices (Monthly): {top_5_indices}")
     
     try:
@@ -126,5 +127,14 @@ def leaderboard():
 
 
 if __name__ == "__main__":
-    indices_performance()
-    leaderboard()
+    # indices_performance()
+    
+    # Check for command line argument
+    num_leaders = 10
+    if len(sys.argv) > 1:
+        try:
+            num_leaders = int(sys.argv[1])
+        except ValueError:
+            pass
+            
+    leaderboard(num_leaders)

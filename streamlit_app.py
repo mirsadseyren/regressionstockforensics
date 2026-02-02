@@ -83,14 +83,23 @@ if st.sidebar.button("🔄 Verileri Güncelle"):
     st.rerun()
 
 if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
+    # Input for number of indices (using session state/sidebar context if needed, but here simple input works)
+    # However since it's inside the button block it might not work well for input.
+    # Better to move input outside or use a trick. But standard way is input outside.
+    pass 
+
+# To make it cleaner, I will rewrite the button block and add the input just before it.
+num_indices = st.sidebar.number_input("Seçilecek Endeks Sayısı", min_value=1, max_value=50, value=10)
+
+if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
     with st.sidebar.status("Endeks analizi yapılıyor...", expanded=True) as status:
         try:
-            st.write("Script çalıştırılıyor...")
+            st.write(f"Script çalıştırılıyor ({num_indices} endeks)...")
             # Script yolunu bul
             script_path = os.path.join(os.path.dirname(__file__), "endeksler", "endeks1y.py")
             
-            # Subprocess ile çalıştır
-            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
+            # Subprocess ile çalıştır (argüman ekle)
+            result = subprocess.run([sys.executable, script_path, str(num_indices)], capture_output=True, text=True, check=True)
             
             st.write("Hisseler güncellendi.")
             status.update(label="İşlem Tamamlandı!", state="complete", expanded=False)
