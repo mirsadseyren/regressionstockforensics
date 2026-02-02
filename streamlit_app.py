@@ -9,6 +9,7 @@ from fix_cache import fix_cache
 import subprocess
 import sys
 import os
+import json
 
 # Import from regression.py
 from regression import (
@@ -36,8 +37,12 @@ default_ix = rebalance_options.index(REBALANCE_FREQ) if REBALANCE_FREQ in rebala
 rebalance_freq = st.sidebar.selectbox("Rebalance Frequency", options=rebalance_options, index=default_ix)
 
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
-slope_stop_pct = st.sidebar.slider("Daily Min Return Stop (%)", min_value=-10.0, max_value=10.0, value=float(SLOPE_STOP_FACTOR * 100), step=0.1, help="Hissenin her gün yapması gereken minimum yüzde değişim. Bu değerin altında kalırsa satılır.")
-slope_stop_factor = slope_stop_pct / 100.0
+use_slope_stop = st.sidebar.checkbox("Daily Min Return Stop (Aktif/Pasif)", value=True)
+if use_slope_stop:
+    slope_stop_pct = st.sidebar.slider("Daily Min Return Stop (%)", min_value=-10.0, max_value=10.0, value=0.5, step=0.1, help="Hissenin her gün yapması gereken minimum yüzde değişim. Bu değerin altında kalırsa satılır.")
+    slope_stop_factor = slope_stop_pct / 100.0
+else:
+    slope_stop_factor = 0.0
 start_capital = st.sidebar.number_input("Starting Capital (TL)", value=float(START_CAPITAL), step=1000.0)
 
 # --- VERİ YÜKLEME ---
@@ -111,6 +116,22 @@ if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
         except Exception as e:
             status.update(label="Hata Oluştu!", state="error")
             st.error(f"Hata: {str(e)}")
+
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("📋 Seçili Endeksler")
+    try:
+        if os.path.exists('selected_indices.json'):
+            with open('selected_indices.json', 'r', encoding='utf-8') as f:
+                selected_indices = json.load(f)
+            
+            # Güzel bir formatta göster
+            st.sidebar.caption(f"Toplam {len(selected_indices)} endeks seçili:")
+            for idx in selected_indices:
+                st.sidebar.text(f"• {idx}")
+        else:
+            st.sidebar.info("Henüz endeks listesi oluşturulmadı.")
+    except Exception as e:
+        st.sidebar.error(f"Liste yüklenirken hata: {e}")
 
 with st.spinner("Veriler yükleniyor..."):
     # session_state'deki force_refresh'i kullan ve sonra sıfırla
