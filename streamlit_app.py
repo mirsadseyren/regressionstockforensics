@@ -31,6 +31,10 @@ min_slope = st.sidebar.number_input("Min Slope (Eğim)", value=MIN_SLOPE, format
 min_r2 = st.sidebar.number_input("Min R-Squared", value=MIN_R_SQUARED)
 stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
 
+rebalance_options = ['1D', '3D', '5D', '7D', '15D', '1M', '2M']
+default_ix = rebalance_options.index(REBALANCE_FREQ) if REBALANCE_FREQ in rebalance_options else 3
+rebalance_freq = st.sidebar.selectbox("Rebalance Frequency", options=rebalance_options, index=default_ix)
+
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
 slope_stop_pct = st.sidebar.slider("Daily Min Return Stop (%)", min_value=-10.0, max_value=10.0, value=float(SLOPE_STOP_FACTOR * 100), step=0.1, help="Hissenin her gün yapması gereken minimum yüzde değişim. Bu değerin altında kalırsa satılır.")
 slope_stop_factor = slope_stop_pct / 100.0
@@ -213,6 +217,7 @@ with tab2:
                 slope_stop_factor=slope_stop_factor,
                 start_capital=start_capital,
                 max_atr_percent=atr_limit,
+                rebalance_freq=rebalance_freq,
                 progress_callback=p_callback
             )
             p_bar.empty()
