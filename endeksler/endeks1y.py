@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import os
 import re
+from endekshisseleri import indices_performance
 
 def parse_percentage(value):
     if not isinstance(value, str):
@@ -34,7 +35,7 @@ def parse_percentage(value):
     except ValueError:
         return None
 
-def main():
+def leaderboard():
     json_path = os.path.join(os.path.dirname(__file__), 'endeks_performans.json')
     try:
         with open(json_path, 'r', encoding='utf-8') as f:
@@ -113,7 +114,7 @@ def main():
             print(f"Warning: {idx_name} not found in endeks_hisseleri.json")
             
     # Save to txt
-    output_txt_path = os.path.join(os.path.dirname(__file__), './top_endeks_hisseleri.txt')
+    output_txt_path = os.path.join(os.path.dirname(__file__), '../top_endeks_hisseleri.txt')
     
     sorted_unique_tickers = sorted(list(unique_tickers))
     
@@ -125,4 +126,5 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    indices_performance()
+    leaderboard()

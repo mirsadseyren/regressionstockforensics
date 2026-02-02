@@ -6,6 +6,9 @@ from datetime import datetime, timedelta
 import plotly.graph_objects as go
 from scipy.stats import linregress
 from fix_cache import fix_cache
+import subprocess
+import sys
+import os
 
 # Import from regression.py
 from regression import (
@@ -74,6 +77,31 @@ if st.sidebar.button("🔄 Verileri Güncelle"):
     st.session_state.force_refresh = True
     st.cache_data.clear()
     st.rerun()
+
+if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
+    with st.sidebar.status("Endeks analizi yapılıyor...", expanded=True) as status:
+        try:
+            st.write("Script çalıştırılıyor...")
+            # Script yolunu bul
+            script_path = os.path.join(os.path.dirname(__file__), "endeksler", "endeks1y.py")
+            
+            # Subprocess ile çalıştır
+            result = subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
+            
+            st.write("Hisseler güncellendi.")
+            status.update(label="İşlem Tamamlandı!", state="complete", expanded=False)
+            
+            # Verileri force refresh yap
+            st.session_state.force_refresh = True
+            st.cache_data.clear()
+            st.rerun()
+            
+        except subprocess.CalledProcessError as e:
+            status.update(label="Hata Oluştu!", state="error")
+            st.error(f"Script hatası: {e.stderr}")
+        except Exception as e:
+            status.update(label="Hata Oluştu!", state="error")
+            st.error(f"Hata: {str(e)}")
 
 with st.spinner("Veriler yükleniyor..."):
     # session_state'deki force_refresh'i kullan ve sonra sıfırla
