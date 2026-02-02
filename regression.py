@@ -18,10 +18,10 @@ STOX_FILE = 'top_endeks_hisseleri.txt'
 DATA_CACHE_FILE = 'bist_data_cache.pkl'
 START_CAPITAL = 100000
 COMMISSION_RATE = 0.005
-REBALANCE_FREQ = '5D'  # 5 Günlük Periyot
-LOOKBACK_DAYS = 25  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.70 # Regresyon uyum kalitesi (0-1 arası) - Düşürüldü
-MIN_SLOPE = 0.0180  # Günlük asgari büyüme hızı (0.5%)
+REBALANCE_FREQ = '7D'  # 7 Günlük Periyot
+LOOKBACK_DAYS = 20  # Regresyon için geriye dönük gün sayısı
+MIN_R_SQUARED = 0.50 # Regresyon uyum kalitesi (0-1 arası)
+MIN_SLOPE = 0.0200  # Günlük asgari büyüme hızı
 STOP_LOSS_RATE = 0.02 # %10 Stop Loss
 MAX_ATR_PERCENT = 0.1 # Yüzdesel oynaklık limiti (ATR/Fiyat)
 SLOPE_STOP_FACTOR = 0.0 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)

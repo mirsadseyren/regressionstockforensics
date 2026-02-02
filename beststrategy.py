@@ -78,7 +78,7 @@ def main():
         'stop_loss': [0.05, 0.10, 0.15],
         'atr': [0.06, 0.08, 0.10],
         'slope_stop': [0.0, 0.002, 0.005, 0.01],
-        'rebalance': ['1D', '3D', '5D', '7D']
+        'rebalance': ['1D', '3D', '5D', '7D', '15D', '1M', '2M']
     }
     
     keys = param_grid.keys()
