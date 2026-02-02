@@ -125,6 +125,12 @@ def leaderboard(leaders=5):
             
     print(f"\n{len(sorted_unique_tickers)} unique tickers saved to: {output_txt_path}")
 
+    # Save selected indices names to a file
+    selected_indices_path = os.path.join(os.path.dirname(__file__), '../selected_indices.json')
+    with open(selected_indices_path, 'w', encoding='utf-8') as f:
+        json.dump(top_5_indices, f, ensure_ascii=False, indent=4)
+    print(f"Selected indices saved to: {selected_indices_path}")
+
 
 if __name__ == "__main__":
     # indices_performance()
