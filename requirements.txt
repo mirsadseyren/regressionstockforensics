@@ -11,3 +11,5 @@ plotly
 
 requests
 beautifulsoup4
+undetected-chromedriver
+selenium

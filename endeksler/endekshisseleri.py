@@ -1,7 +1,13 @@
-import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+try:
+    import undetected_chromedriver as uc
+    from selenium.webdriver.common.by import By
+    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.support import expected_conditions as EC
+    HAS_SELENIUM = True
+except ImportError:
+    uc = None
+    HAS_SELENIUM = False
+    print("WARNING: undetected_chromedriver or selenium not found. Scraping will not work.")
 import time
 import json
 import os
@@ -15,6 +21,10 @@ def get_indices_and_stocks():
     # Configuration
     indices_url = "https://tr.investing.com/indices/turkey-indices?include-major-indices=true&include-additional-indices=true&include-primary-sectors=true&include-other-indices=true"
     
+    if not HAS_SELENIUM:
+        print("Selenium not installed, cannot scrape.")
+        return
+
     # Initialize Driver
     print("Initializing Browser...")
     options = uc.ChromeOptions()
