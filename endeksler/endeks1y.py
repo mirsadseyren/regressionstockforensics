@@ -131,6 +131,48 @@ def leaderboard(leaders=5):
         json.dump(top_5_indices, f, ensure_ascii=False, indent=4)
     print(f"Selected indices saved to: {selected_indices_path}")
 
+def get_top_indices_tickers(n_leaders=10):
+    """
+    Returns a list of unique tickers for the top n_leaders indices.
+    """
+    json_path = os.path.join(os.path.dirname(__file__), 'endeks_performans.json')
+    try:
+        with open(json_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        return []
+
+    rows = []
+    for index_name, metrics in data.items():
+        row = {'Index': index_name}
+        for key in ['gunluk', 'haftalik', 'aylik', 'uc_aylik', 'alti_aylik', 'bir_yillik']:
+             str_val = metrics.get(key, '-')
+             row[key] = parse_percentage(str_val)
+        rows.append(row)
+
+    df = pd.DataFrame(rows)
+    # Sort by monthly return
+    df_sorted = df.sort_values(by='bir_yillik', ascending=False)
+    
+    top_indices = df_sorted.head(n_leaders)['Index'].tolist()
+    
+    try:
+        hisseler_json_path = os.path.join(os.path.dirname(__file__), 'endeks_hisseleri.json')
+        with open(hisseler_json_path, 'r', encoding='utf-8') as f:
+            hisseler_data = json.load(f)
+    except FileNotFoundError:
+        return []
+
+    unique_tickers = set()
+    for idx_name in top_indices:
+        if idx_name in hisseler_data:
+            tickers = hisseler_data[idx_name]
+            if isinstance(tickers, list):
+                for t in tickers:
+                    if isinstance(t, str) and t.strip():
+                        unique_tickers.add(t.strip() + ".IS") # Add .IS suffix here as expected by regression
+            
+    return sorted(list(unique_tickers))
 
 if __name__ == "__main__":
     # indices_performance()
