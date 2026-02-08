@@ -444,42 +444,50 @@ with tab4:
         if opportunities:
             df_opps = pd.DataFrame(opportunities)
             
-            # Görselleştirme: Zaman Çizelgesi
-            # Y ekseni için rastgele küçük bir offset vererek üst üste binmeyi azaltalım
-            df_opps['Y'] = np.random.uniform(-0.5, 0.5, size=len(df_opps))
+            # Görselleştirme: Zaman Çizelgesi (Hisse Bazlı Trend)
+            df_opps = df_opps.sort_values(['Ticker', 'Date'])
+            
+            # Ticker değiştiğinde çizginin kopması için her ticker grubunun sonuna None ekliyoruz
+            plot_x, plot_y, plot_text, plot_color, plot_custom = [], [], [], [], []
+            for ticker, group in df_opps.groupby('Ticker'):
+                plot_x.extend(group['Date'].tolist() + [None])
+                plot_y.extend((group['Score'] * 100).tolist() + [None])
+                plot_text.extend(group['Ticker'].tolist() + [None])
+                plot_color.extend((group['Score'] * 100).tolist() + [None])
+                plot_custom.extend(group[['Price', 'Slope', 'R2']].values.tolist() + [[None, None, None]])
             
             fig3 = go.Figure()
-            
-            # Her hisse için ayrı bir scatter (veya tek bir scatter ile text label)
             fig3.add_trace(go.Scatter(
-                x=df_opps['Date'],
-                y=df_opps['Y'],
-                mode='markers',
-                text=df_opps['Ticker'],
-                textposition="top center",
+                x=plot_x,
+                y=plot_y,
+                mode='lines+markers',
+                text=plot_text,
                 marker=dict(
-                    size=12,
-                    color=df_opps['Score'] * 100,
+                    size=8,
+                    color=plot_color,
                     colorscale='RdYlGn',
                     showscale=True,
-                    colorbar=dict(title="Alım Fırsatı (%)")
+                    colorbar=dict(title="Skor (%)"),
+                    line=dict(width=1, color='DarkSlateGrey')
                 ),
+                line=dict(color='rgba(100, 100, 100, 0.3)', width=1.5),
+                connectgaps=False, # Ticker'lar arası çizgiyi koparır
                 hovertemplate=(
                     "<b>%{text}</b><br>" +
                     "Tarih: %{x}<br>" +
+                    "Skor: %{y:.2f}%<br>" +
                     "Fiyat: %{customdata[0]:.2f}<br>" +
-                    "Eğim: %{customdata[1]:.4f}<br>" +
-                    "R2: %{customdata[2]:.2f}<br>" +
-                    "Skor: %{marker.color:.2f}%<extra></extra>"
+                    "R2: %{customdata[2]:.2f}<extra></extra>"
                 ),
-                customdata=df_opps[['Price', 'Slope', 'R2']]
+                customdata=plot_custom
             ))
             
             fig3.update_layout(
-                title="Geçmiş Fırsatlar Zaman Çizelgesi",
+                title="Hisse Bazlı Fırsat Trendleri (Skor %)",
                 xaxis_title="Tarih",
-                yaxis=dict(showticklabels=False, range=[-1, 1], zeroline=True, zerolinecolor='gray'),
-                height=500,
+                yaxis_title="Alım Fırsatı (%)",
+                yaxis=dict(showticklabels=True, gridcolor='rgba(200,200,200,0.2)'),
+                height=600,
                 showlegend=False
             )
             
@@ -487,7 +495,7 @@ with tab4:
             
             # Tablo Görünümü
             st.subheader("Fırsat Listesi")
-            df_display_opps = df_opps.drop(columns=['Y']).copy()
+            df_display_opps = df_opps.copy()
             df_display_opps['Score'] = df_display_opps['Score'] * 100
             df_display_opps.rename(columns={'Score': 'Alım Fırsatı (%)'}, inplace=True)
             
