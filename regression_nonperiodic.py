@@ -17,11 +17,11 @@ warnings.filterwarnings('ignore')
 STOX_FILE = 'top_endeks_hisseleri.txt'
 DATA_CACHE_FILE = 'bist_data_cache.pkl'
 START_CAPITAL = 100000
-COMMISSION_RATE = 0.003
+COMMISSION_RATE = 0.002
 REBALANCE_FREQ = '7D'  # 7 Günlük Periyot
 LOOKBACK_DAYS = 20  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.74 # Regresyon uyum kalitesi (0-1 arası)
-MIN_SLOPE = 0.0327  # Günlük asgari büyüme hızı
+MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası)
+MIN_SLOPE = 0.0300  # Günlük asgari büyüme hızı
 STOP_LOSS_RATE = 0.02 # %10 Stop Loss
 MAX_ATR_PERCENT = 0.1    # Yüzdesel oynaklık limiti (ATR/Fiyat)
 SLOPE_STOP_FACTOR = 0.000 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
@@ -193,6 +193,26 @@ def get_vectorized_metrics(all_data, lookback_days):
         'prices': closes.ffill(limit=limit)
     }
 
+from arch import arch_model
+
+def calculate_garch_sigma(prices):
+    """
+    GARCH(1,1) volatisini hesaplar.
+    """
+    try:
+        returns = 100 * prices.pct_change().dropna() # Yüzdesel getiri
+        if len(returns) < 30: # Yetersiz veri
+            return np.nan
+            
+        model = arch_model(returns, vol='Garch', dist='skewt', p=1, q=1)
+        res = model.fit(disp='off', show_warning=False)
+        
+        # Son günün koşullu volatilitesi (yüzde cinsinden döner, tekrar ondalığa çeviriyoruz)
+        sigma = res.conditional_volatility.iloc[-1] / 100
+        return sigma
+    except Exception as e:
+        return np.nan
+
 def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_atr_percent=MAX_ATR_PERCENT, 
                         min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, precalc=None):
     # Eğer precalc varsa, vektörize veriden direkt çek
@@ -223,9 +243,40 @@ def find_best_candidate(target_date, all_data, lookback_days=LOOKBACK_DAYS, max_
                     'vol_curr': precalc['volumes'].at[dt, ticker]
                 })
             
-            # İskonto (skore) göre sırala
+            # İlk etapta Skora göre sırala ve ilk 30 adayı al (GARCH hesaplama yükünü azaltmak için)
             candidates.sort(key=lambda x: x['score'], reverse=True)
-            return candidates
+            top_candidates = candidates[:30]
+            
+            final_candidates = []
+            
+            # Top adaylar için GARCH hesapla
+            # Veriye erişim için all_data'yı kullanmamız lazım
+            if isinstance(all_data.columns, pd.MultiIndex):
+                closes = all_data['Close']
+            else:
+                closes = all_data
+            
+            for cand in top_candidates:
+                ticker = cand['t']
+                # Son 1 yılın verisi (veya yeterince uzun)
+                # target_date öncesi veriyi al
+                try:
+                    price_series = closes[ticker].loc[:dt].tail(252) # Son 1 yıl
+                    sigma = calculate_garch_sigma(price_series)
+                    
+                    if not np.isnan(sigma) and sigma > 0:
+                        cand['garch_sigma'] = sigma
+                        # GARCH Adjusted Score: Score / Sigma 
+                        # Yüksek Skor (İskonto) ve Düşük Oynaklık istiyoruz.
+                        cand['garch_score'] = cand['score'] / sigma
+                        final_candidates.append(cand)
+                except KeyError:
+                    continue
+            
+            # GARCH Skora göre sırala (En yüksek)
+            final_candidates.sort(key=lambda x: x['garch_score'], reverse=True)
+            return final_candidates
+            
         except Exception as e:
             # print(f"Vectorized search error: {e}")
             return []
@@ -422,10 +473,65 @@ if __name__ == "__main__":
     print(f"\n🎯 Sonuç: {START_CAPITAL:,.0f} TL -> {final_balance:,.2f} TL")
     print(f"Toplam Getiri: %{roi:.2f}")
     
+    # EXCEL ÇIKTISI (Renklendirilmiş)
+    try:
+        import openpyxl
+        from openpyxl.styles import PatternFill, Font
+        from openpyxl.utils.dataframe import dataframe_to_rows
+        
+        if trade_history:
+            columns = ["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"]
+            df_history = pd.DataFrame(trade_history, columns=columns)
+            
+            # Excel dosyası oluştur
+            wb = openpyxl.Workbook()
+            ws = wb.active
+            ws.title = "İşlem Geçmişi"
+            
+            # Başlıkları ekle
+            ws.append(columns)
+            
+            # Verileri ekle ve renklendir
+            green_fill = PatternFill(start_color="C6EFCE", end_color="C6EFCE", fill_type="solid") # Açık Yeşil
+            red_fill = PatternFill(start_color="FFC7CE", end_color="FFC7CE", fill_type="solid") # Açık Kırmızı
+            white_fill = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid") # Beyaz
+            
+            for index, row in df_history.iterrows():
+                ws.append(row.tolist())
+                current_row = ws[index + 2] # +2 çünkü başlık var ve openpyxl 1-indexed
+                
+                # Renklendirme Mantığı
+                is_buy = row['İşlem'] == 'ALIS'
+                info = row['Bilgi']
+                
+                fill = None
+                if is_buy:
+                    fill = white_fill
+                elif 'P/L: %-' in info: # Zarar
+                     fill = red_fill
+                elif 'P/L: %' in info: # Kar
+                     fill = green_fill
+                
+                if fill:
+                    for cell in current_row:
+                        cell.fill = fill
+                        
+            wb.save('trade_history.xlsx')
+            print(f"\nİşlem geçmişi 'trade_history.xlsx' dosyasına renkli olarak kaydedildi.")
+            
+    except ImportError:
+        # Fallback to CSV if openpyxl is missing
+        if trade_history:
+            columns = ["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"]
+            df_history = pd.DataFrame(trade_history, columns=columns)
+            df_history.to_csv('trade_history.csv', index=False, encoding='utf-8-sig', sep=';')
+            print(f"\nİşlem geçmişi 'trade_history.csv' dosyasına kaydedildi (Excel renkli çıktı için openpyxl kurun).")
+
+
     # --- GÖRSELLEŞTİRME ---
     plt.style.use('dark_background')
-    fig = plt.figure(figsize=(12, 8))
-    gs = fig.add_gridspec(2, 1, height_ratios=[3, 1])
+    fig = plt.figure(figsize=(14, 10))
+    gs = fig.add_gridspec(2, 1, height_ratios=[2, 1])
     
     # Ana Grafik
     ax1 = fig.add_subplot(gs[0])
@@ -436,23 +542,96 @@ if __name__ == "__main__":
     ax1.legend()
     ax1.grid(True, alpha=0.15)
     
-    # İşlem Tablosu
+    # Scrollable Table Implementation
     ax2 = fig.add_subplot(gs[1])
     ax2.axis('off')
+    
+    # Veri Hazırlığı
     columns = ["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"]
-    table_data = trade_history[-15:] if trade_history else [["-"] * 7]
-    the_table = ax2.table(cellText=table_data, colLabels=columns, loc='center', cellLoc='center')
+    if not trade_history:
+        trade_history = [["-"] * 7]
+    
+    # Tabloyu tersten sırala (En yeni en üstte)
+    table_data_full = list(reversed(trade_history))
+    
+    rows_per_page = 12
+    total_rows = len(table_data_full)
+    
+    # İlk sayfa verisi
+    current_data = table_data_full[:rows_per_page]
+    # Eğer veri azsa boş satırlarla doldur
+    while len(current_data) < rows_per_page:
+        current_data.append([""] * len(columns))
+        
+    the_table = ax2.table(cellText=current_data, colLabels=columns, loc='center', cellLoc='center', bbox=[0, 0, 1, 1])
     the_table.auto_set_font_size(False)
     the_table.set_fontsize(9)
-    the_table.scale(1, 1.5)
     
-    for (row, col), cell in the_table.get_celld().items():
-        cell.set_text_props(color='black', fontweight='bold')
-        if row == 0:
-            cell.set_facecolor('#3498db')
-            cell.set_text_props(color='white', fontweight='bold')
-        else:
-            cell.set_facecolor('#ecf0f1')
+    # Renklendirme Fonksiyonu
+    def color_rows(data_slice):
+        for i, row in enumerate(data_slice):
+            # Hücrelerin varsayılan rengi (Dark Theme)
+            bg_color = 'none' 
+            text_color = 'white'
+            
+            if row[0] != "" and row[0] != "-":
+                # İşlem tipine göre renk
+                action = row[4] # İşlem Sütunu
+                info = row[6]   # Bilgi Sütunu
+                
+                if action == 'ALIS':
+                    bg_color = '#ffffff' # Beyaz Arkaplan
+                    text_color = 'black' # Siyah Yazı
+                elif 'P/L: %-' in info: # Zarar
+                    bg_color = '#c0392b' # Kırmızı
+                    text_color = 'white'
+                elif 'P/L: %' in info: # Kar (Pozitif)
+                    bg_color = '#27ae60' # Yeşil
+                    text_color = 'white'
+            
+            # Satırdaki tüm hücreleri boya
+            for j in range(len(columns)):
+                cell = the_table[i+1, j] # +1 header olduğu için
+                cell.set_facecolor(bg_color)
+                cell.set_text_props(color=text_color)
     
-    plt.tight_layout()
+    color_rows(current_data)
+    
+    # Slider Ekleme
+    if total_rows > rows_per_page:
+        from matplotlib.widgets import Slider
+        
+        # Slider ekseni
+        ax_slider = plt.axes([0.92, 0.15, 0.02, 0.25], facecolor='lightgoldenrodyellow')
+        slider = Slider(
+            ax=ax_slider,
+            label="Scroll",
+            valmin=0,
+            valmax=total_rows - rows_per_page,
+            valinit=0,
+            orientation="vertical",
+            valstep=1
+        )
+        
+        def update(val):
+            start = int(slider.val) # Slider yukarıdan aşağıya çalışsın diye ters çevirmedik, data zaten ters
+            end = start + rows_per_page
+            new_data = table_data_full[start:end]
+            
+            # Veri azsa doldur
+            while len(new_data) < rows_per_page:
+                new_data.append([""] * len(columns))
+            
+            # Hücre içeriklerini güncelle
+            for i, row in enumerate(new_data):
+                for j, val in enumerate(row):
+                    the_table[i+1, j].get_text().set_text(val)
+            
+            # Renkleri güncelle
+            color_rows(new_data)
+            fig.canvas.draw_idle()
+            
+        slider.on_changed(update)
+
+    plt.tight_layout(rect=[0, 0, 0.9, 1]) # Slider için yer aç
     plt.show()

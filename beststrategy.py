@@ -10,7 +10,7 @@ import os
 sys.path.append(os.path.join(os.path.dirname(__file__), 'endeksler'))
 from endeks1y import get_top_indices_tickers
 
-from regression import (
+from regression_nonperiodic import (
     run_simulation, load_data, get_tickers_from_file, STOX_FILE,
     START_CAPITAL, COMMISSION_RATE, REBALANCE_FREQ
 )
