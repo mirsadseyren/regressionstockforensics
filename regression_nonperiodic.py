@@ -591,7 +591,7 @@ if __name__ == "__main__":
                 elif 'P/L: %' in info: # Kar (Pozitif)
                     bg_color = '#27ae60' # Yeşil
                     text_color = 'white'
-                elif 'SÜRE DOLDU' in action:
+                elif 'SÜRE DOLDU' in action or 'VOLUME STOP' in action:
                     bg_color = '#27ae60' # Yeşil
                     text_color = 'white'
             
