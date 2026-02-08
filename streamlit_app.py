@@ -444,51 +444,34 @@ with tab4:
         if opportunities:
             df_opps = pd.DataFrame(opportunities)
             
-            # Görselleştirme: Zaman Çizelgesi (Hisse Bazlı Trend)
+            # Görselleştirme: Zaman Çizelgesi (Hisse Bazlı Basit Trend)
             df_opps = df_opps.sort_values(['Ticker', 'Date'])
             
-            # Ticker değiştiğinde çizginin kopması için her ticker grubunun sonuna None ekliyoruz
-            plot_x, plot_y, plot_text, plot_color, plot_custom = [], [], [], [], []
-            for ticker, group in df_opps.groupby('Ticker'):
-                plot_x.extend(group['Date'].tolist() + [None])
-                plot_y.extend((group['Score'] * 100).tolist() + [None])
-                plot_text.extend(group['Ticker'].tolist() + [None])
-                plot_color.extend((group['Score'] * 100).tolist() + [None])
-                plot_custom.extend(group[['Price', 'Slope', 'R2']].values.tolist() + [[None, None, None]])
-            
             fig3 = go.Figure()
-            fig3.add_trace(go.Scatter(
-                x=plot_x,
-                y=plot_y,
-                mode='lines+markers',
-                text=plot_text,
-                marker=dict(
-                    size=8,
-                    color=plot_color,
-                    colorscale='RdYlGn',
-                    showscale=True,
-                    colorbar=dict(title="Skor (%)"),
-                    line=dict(width=1, color='DarkSlateGrey')
-                ),
-                line=dict(color='rgba(100, 100, 100, 0.3)', width=1.5),
-                connectgaps=False, # Ticker'lar arası çizgiyi koparır
-                hovertemplate=(
-                    "<b>%{text}</b><br>" +
-                    "Tarih: %{x}<br>" +
-                    "Skor: %{y:.2f}%<br>" +
-                    "Fiyat: %{customdata[0]:.2f}<br>" +
-                    "R2: %{customdata[2]:.2f}<extra></extra>"
-                ),
-                customdata=plot_custom
-            ))
+            
+            # Her ticker için ayrı bir çizgi (trace) ekleyerek daha temiz bir görünüm ve efsane (legend) sağlıyoruz
+            for ticker, group in df_opps.groupby('Ticker'):
+                fig3.add_trace(go.Scatter(
+                    x=group['Date'],
+                    y=group['Score'] * 100,
+                    mode='lines+markers',
+                    name=ticker,
+                    marker=dict(size=6),
+                    line=dict(width=2),
+                    hovertemplate=(
+                        f"<b>{ticker}</b><br>" +
+                        "Tarih: %{x}<br>" +
+                        "Skor: %{y:.2f}%<extra></extra>"
+                    )
+                ))
             
             fig3.update_layout(
-                title="Hisse Bazlı Fırsat Trendleri (Skor %)",
+                title="Hisse Bazlı Alım Fırsatı Trendleri",
                 xaxis_title="Tarih",
-                yaxis_title="Alım Fırsatı (%)",
-                yaxis=dict(showticklabels=True, gridcolor='rgba(200,200,200,0.2)'),
+                yaxis_title="Skor (%)",
                 height=600,
-                showlegend=False
+                legend_title="Hisseler",
+                hovermode="x unified" # Aynı tarihteki tüm hisseleri bir arada görmek için
             )
             
             st.plotly_chart(fig3, use_container_width=True)
