@@ -503,6 +503,7 @@ if __name__ == "__main__":
                 # Renklendirme Mantığı
                 is_buy = row['İşlem'] == 'ALIS'
                 info = row['Bilgi']
+                action = str(row['İşlem'])
                 
                 fill = None
                 if is_buy:
@@ -510,6 +511,8 @@ if __name__ == "__main__":
                 elif 'P/L: %-' in info: # Zarar
                      fill = red_fill
                 elif 'P/L: %' in info: # Kar
+                     fill = green_fill
+                elif 'SÜRE DOLDU' in action:
                      fill = green_fill
                 
                 if fill:
@@ -576,7 +579,7 @@ if __name__ == "__main__":
             
             if row[0] != "" and row[0] != "-":
                 # İşlem tipine göre renk
-                action = row[4] # İşlem Sütunu
+                action = str(row[4]) # İşlem Sütunu (str cast önemli)
                 info = row[6]   # Bilgi Sütunu
                 
                 if action == 'ALIS':
@@ -586,6 +589,9 @@ if __name__ == "__main__":
                     bg_color = '#c0392b' # Kırmızı
                     text_color = 'white'
                 elif 'P/L: %' in info: # Kar (Pozitif)
+                    bg_color = '#27ae60' # Yeşil
+                    text_color = 'white'
+                elif 'SÜRE DOLDU' in action:
                     bg_color = '#27ae60' # Yeşil
                     text_color = 'white'
             
