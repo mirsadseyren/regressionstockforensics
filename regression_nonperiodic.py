@@ -512,7 +512,7 @@ if __name__ == "__main__":
                      fill = red_fill
                 elif 'P/L: %' in info: # Kar
                      fill = green_fill
-                elif 'SÜRE DOLDU' in action:
+                elif 'SÜRE DOLDU ' in action:
                      fill = green_fill
                 
                 if fill:
