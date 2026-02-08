@@ -423,7 +423,9 @@ with tab4:
                         'Price': c['price'],
                         'Slope': c['slope'],
                         'R2': c['r2'],
-                        'Score': c['score']
+                        'Score': c['score'],
+                        'Günlük Hacim': c.get('vol_curr', 0),
+                        'Ortalama Hacim': c.get('vol_avg', 0)
                     })
             
             progress_bar.progress((idx + 1) / len(scan_dates))
@@ -480,7 +482,14 @@ with tab4:
             
             # Tablo Görünümü
             st.subheader("Fırsat Listesi")
-            st.dataframe(df_opps.drop(columns=['Y']).sort_values('Date', ascending=False))
+            st.dataframe(df_opps.drop(columns=['Y']).sort_values('Date', ascending=False).style.format({
+                'Price': "{:.2f}",
+                'Slope': "{:.4f}",
+                'R2': "{:.2f}",
+                'Score': "{:.4f}",
+                'Günlük Hacim': "{:,.0f}",
+                'Ortalama Hacim': "{:,.0f}"
+            }))
         else:
             st.warning("Bu periyotta parametrelere uygun fırsat bulunamadı.")
 
