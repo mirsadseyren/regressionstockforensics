@@ -455,14 +455,14 @@ with tab4:
                 x=df_opps['Date'],
                 y=df_opps['Y'],
                 mode='markers',
-                # text=df_opps['Ticker'],
+                text=df_opps['Ticker'],
                 textposition="top center",
                 marker=dict(
-                    size=10,
-                    color=df_opps['Score'],
-                    colorscale='Viridis',
+                    size=12,
+                    color=df_opps['Score'] * 100,
+                    colorscale='RdYlGn',
                     showscale=True,
-                    colorbar=dict(title="Skor")
+                    colorbar=dict(title="Alım Fırsatı (%)")
                 ),
                 hovertemplate=(
                     "<b>%{text}</b><br>" +
@@ -470,7 +470,7 @@ with tab4:
                     "Fiyat: %{customdata[0]:.2f}<br>" +
                     "Eğim: %{customdata[1]:.4f}<br>" +
                     "R2: %{customdata[2]:.2f}<br>" +
-                    "Skor: %{marker.color:.4f}<extra></extra>"
+                    "Skor: %{marker.color:.2f}%<extra></extra>"
                 ),
                 customdata=df_opps[['Price', 'Slope', 'R2']]
             ))
@@ -487,14 +487,18 @@ with tab4:
             
             # Tablo Görünümü
             st.subheader("Fırsat Listesi")
-            st.dataframe(df_opps.drop(columns=['Y']).sort_values('Date', ascending=False).style.format({
+            df_display_opps = df_opps.drop(columns=['Y']).copy()
+            df_display_opps['Score'] = df_display_opps['Score'] * 100
+            df_display_opps.rename(columns={'Score': 'Alım Fırsatı (%)'}, inplace=True)
+            
+            st.dataframe(df_display_opps.sort_values('Date', ascending=False).style.format({
                 'Price': "{:.2f}",
                 'Slope': "{:.4f}",
                 'R2': "{:.2f}",
-                'Score': "{:.4f}",
+                'Alım Fırsatı (%)': "{:.2f}%",
                 'Günlük Hacim': "{:,.0f}",
                 'Ortalama Hacim': "{:,.0f}"
-            }))
+            }).background_gradient(subset=['Alım Fırsatı (%)'], cmap='RdYlGn'))
         else:
             st.warning("Bu periyotta parametrelere uygun fırsat bulunamadı.")
 
