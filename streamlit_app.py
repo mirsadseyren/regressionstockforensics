@@ -258,16 +258,18 @@ with tab2:
         successful_trades = 0
         unsuccessful_trades = 0
         for trade in trade_history:
-            if trade[4] in ['SATIS', 'STOP LOSS', 'HACIM STOP', 'SLOPE STOP']:
-                if "P/L: %" in trade[6]:
-                    try:
-                        pl_val = float(trade[6].split('P/L: %')[1].split()[0].split('|')[0].strip())
-                        if pl_val > 0:
-                            successful_trades += 1
-                        else:
-                            unsuccessful_trades += 1
-                    except:
-                        pass
+            action = str(trade[4])
+            if action == 'ALIS':
+                continue
+                
+            info = str(trade[6])
+            
+            # Kırmızı (Başarısız) - Zarar
+            if 'P/L: %-' in info:
+                unsuccessful_trades += 1
+            # Yeşil (Başarılı) - Kar veya SÜRE DOLDU/VOLUME STOP (Zarar değilse)
+            elif 'P/L: %' in info or 'SÜRE DOLDU' in action or 'VOLUME STOP' in action:
+                successful_trades += 1
         
         c1, c2, c3, c4, c5 = st.columns(5)
         c1.metric("Başlangıç", f"{start_capital:,.0f} TL")
