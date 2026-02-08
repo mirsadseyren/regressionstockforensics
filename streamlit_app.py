@@ -310,11 +310,14 @@ with tab2:
             df_hist = pd.DataFrame(trade_history, columns=["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"])
             
             def style_trades(row):
-                if row['İşlem'] in ['SATIS', 'STOP LOSS', 'HACIM STOP', 'SLOPE STOP']:
+                action = str(row['İşlem'])
+                if action in ['SATIS', 'STOP LOSS', 'HACIM STOP', 'SLOPE STOP'] or 'SÜRE DOLDU' in action:
                     info = row['Bilgi']
                     if 'P/L: %-' in info:
                         return ['background-color: #ff4b4b; color: white; font-weight: bold'] * len(row) # Kırmızı
                     elif 'P/L: %' in info:
+                        return ['background-color: #21c35a; color: white; font-weight: bold'] * len(row) # Yeşil
+                    elif 'SÜRE DOLDU' in action:
                         return ['background-color: #21c35a; color: white; font-weight: bold'] * len(row) # Yeşil
                 return [''] * len(row)
 
