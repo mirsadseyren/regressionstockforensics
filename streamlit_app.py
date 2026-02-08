@@ -11,8 +11,8 @@ import sys
 import os
 import json
 
-# Import from regression.py
-from regression import (
+# Import from regression_nonperiodic.py
+from regression_nonperiodic import (
     load_data, get_tickers_from_file, find_best_candidate, run_simulation,
     get_vectorized_metrics, get_clean_data,
     STOX_FILE, LOOKBACK_DAYS, MIN_SLOPE, MIN_R_SQUARED, 
@@ -22,7 +22,7 @@ from regression import (
 
 st.set_page_config(page_title="Regression Bot Dashboard", layout="wide")
 
-st.title("🚀 Momentum Regression Bot")
+st.title("🚀 Momentum Regression Bot (Non-Periodic)")
 
 # --- SIDEBAR: Ayarlar ---
 st.sidebar.header("⚙️ Strateji Parametreleri")
@@ -34,7 +34,7 @@ stop_loss = st.sidebar.number_input("Stop Loss Rate", value=STOP_LOSS_RATE)
 
 rebalance_options = ['1D', '3D', '5D', '7D', '15D', '1M', '2M']
 default_ix = rebalance_options.index(REBALANCE_FREQ) if REBALANCE_FREQ in rebalance_options else 3
-rebalance_freq = st.sidebar.selectbox("Rebalance Frequency", options=rebalance_options, index=default_ix)
+rebalance_freq = st.sidebar.selectbox("Max Holding Period (Rebalance Freq)", options=rebalance_options, index=default_ix)
 
 atr_limit = st.sidebar.number_input("ATR Filter Rate", value=MAX_ATR_PERCENT, format="%.3f")
 use_slope_stop = st.sidebar.checkbox("Daily Min Return Stop (Aktif/Pasif)", value=True)
@@ -76,7 +76,7 @@ def get_data(force=False):
         
         # Eğer yeni veri indirildiyse, düzeltilmiş halini tekrar cache dosyasına yaz
         if force:
-            from regression import DATA_CACHE_FILE
+            from regression_nonperiodic import DATA_CACHE_FILE
             data.to_pickle(DATA_CACHE_FILE)
             
     return get_clean_data(data)

@@ -7,6 +7,7 @@ tqdm
 openpyxl
 streamlit>=1.42.0
 plotly
+arch
 
 
 requests
