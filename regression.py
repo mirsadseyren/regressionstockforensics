@@ -20,11 +20,11 @@ START_CAPITAL = 100000
 COMMISSION_RATE = 0.005
 REBALANCE_FREQ = '7D'  # 7 Günlük Periyot
 LOOKBACK_DAYS = 20  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.75 # Regresyon uyum kalitesi (0-1 arası)
-MIN_SLOPE = 0.0270  # Günlük asgari büyüme hızı
+MIN_R_SQUARED = 0.74 # Regresyon uyum kalitesi (0-1 arası)
+MIN_SLOPE = 0.0327  # Günlük asgari büyüme hızı
 STOP_LOSS_RATE = 0.02 # %10 Stop Loss
-MAX_ATR_PERCENT = 0.1 # Yüzdesel oynaklık limiti (ATR/Fiyat)
-SLOPE_STOP_FACTOR = 0.005 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
+MAX_ATR_PERCENT = 0.2 # Yüzdesel oynaklık limiti (ATR/Fiyat)
+SLOPE_STOP_FACTOR = 0.000 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
 
 
 def get_tickers_from_file(file_path):

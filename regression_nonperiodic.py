@@ -17,14 +17,14 @@ warnings.filterwarnings('ignore')
 STOX_FILE = 'top_endeks_hisseleri.txt'
 DATA_CACHE_FILE = 'bist_data_cache.pkl'
 START_CAPITAL = 100000
-COMMISSION_RATE = 0.005
+COMMISSION_RATE = 0.003
 REBALANCE_FREQ = '7D'  # 7 Günlük Periyot
 LOOKBACK_DAYS = 20  # Regresyon için geriye dönük gün sayısı
-MIN_R_SQUARED = 0.80 # Regresyon uyum kalitesi (0-1 arası)
-MIN_SLOPE = 0.0300  # Günlük asgari büyüme hızı
+MIN_R_SQUARED = 0.74 # Regresyon uyum kalitesi (0-1 arası)
+MIN_SLOPE = 0.0327  # Günlük asgari büyüme hızı
 STOP_LOSS_RATE = 0.02 # %10 Stop Loss
-MAX_ATR_PERCENT = 0.1 # Yüzdesel oynaklık limiti (ATR/Fiyat)
-SLOPE_STOP_FACTOR = 0.005 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
+MAX_ATR_PERCENT = 0.1    # Yüzdesel oynaklık limiti (ATR/Fiyat)
+SLOPE_STOP_FACTOR = 0.000 # Günlük Asgari Getiri Oranı (Örn: 0.005 = Günlük %0.5 artış beklentisi)
 
 
 def get_tickers_from_file(file_path):
@@ -321,6 +321,18 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                 if current_price < floor_price:
                     should_sell = True
                     reason = "SLOPE STOP"
+                    
+            # D. Hacim Stopu (Volume Stop)
+            if not should_sell:
+                try:
+                    curr_vol = precalc['volumes'].at[dt, item['t']]
+                    avg_vol = precalc['vol_avgs'].at[dt, item['t']]
+                    if not pd.isna(curr_vol) and not pd.isna(avg_vol) and avg_vol > 0:
+                        if curr_vol*(4.5) < avg_vol:
+                            should_sell = True
+                            reason = "VOLUME STOP"
+                except:
+                    pass
 
             # D. SATIŞ İŞLEMİ
             if should_sell:
