@@ -307,7 +307,6 @@
         "BLCYT",
         "BOSSA",
         "BRKSN",
-        "YYAPI",
         "BRSAN",
         "BRYAT",
         "BSOKE",
@@ -473,6 +472,7 @@
         "SEKFK",
         "SELEC",
         "DUNYH",
+        "KUVVA",
         "SILVR",
         "SISE",
         "SKBNK",
@@ -532,7 +532,6 @@
         "SANFM",
         "TKNSA",
         "ULAS",
-        "YESIL",
         "AKYHO",
         "AVHOL",
         "ETILR",
@@ -817,7 +816,13 @@
         "UCAYM",
         "AKHAN",
         "NETCD",
-        "BESTE"
+        "BESTE",
+        "ATATR",
+        "EMPAE",
+        "SVGYO",
+        "GENKM",
+        "LXGYO",
+        "MCARD"
     ],
     "XTUMY": [
         "ADEL",
@@ -853,6 +858,7 @@
         "BANVT",
         "BFREN",
         "BESLR",
+        "KUVVA",
         "BEYAZ",
         "AKYHO",
         "AVHOL",
@@ -896,7 +902,13 @@
         "UCAYM",
         "AKHAN",
         "NETCD",
-        "BESTE"
+        "BESTE",
+        "ATATR",
+        "EMPAE",
+        "SVGYO",
+        "GENKM",
+        "LXGYO",
+        "MCARD"
     ],
     "XBLSM": [
         "ALCTL",
@@ -934,7 +946,9 @@
         "ODINE",
         "BINBN",
         "DOFRB",
-        "NETCD"
+        "NETCD",
+        "EMPAE",
+        "MCARD"
     ],
     "XTRZM": [
         "AVTUR",
@@ -949,7 +963,8 @@
         "MERIT",
         "BIGCH",
         "BYDNR",
-        "TABGD"
+        "TABGD",
+        "ATATR"
     ],
     "XTCRT": [
         "BIMAS",
@@ -961,6 +976,7 @@
         "MGROS",
         "SANKO",
         "SELEC",
+        "KUVVA",
         "VAKKO",
         "TKNSA",
         "TGSAS",
@@ -1059,7 +1075,6 @@
         "HUBVC",
         "OSTIM",
         "POLHO",
-        "YESIL",
         "AKYHO",
         "AVHOL",
         "BERA",
@@ -1129,7 +1144,9 @@
         "AHSGY",
         "EGEGY",
         "ZERGY",
-        "ZGYO"
+        "ZGYO",
+        "SVGYO",
+        "LXGYO"
     ],
     "XUTEK": [
         "ALCTL",
@@ -1171,7 +1188,9 @@
         "ONRYT",
         "BINBN",
         "DOFRB",
-        "NETCD"
+        "NETCD",
+        "EMPAE",
+        "MCARD"
     ],
     "XUMAL": [
         "ARSAN",
@@ -1181,7 +1200,9 @@
         "FZLGY",
         "PAHOL",
         "ZERGY",
-        "ZGYO"
+        "ZGYO",
+        "SVGYO",
+        "LXGYO"
     ],
     "XLBNK": [
         "AKBNK",
@@ -1216,7 +1237,6 @@
     ],
     "XINSA": [
         "ANELE",
-        "YYAPI",
         "EDIP",
         "ENKAI",
         "ORGE",
@@ -1512,7 +1532,8 @@
         "MARMR",
         "MEYSU",
         "FRMPL",
-        "AKHAN"
+        "AKHAN",
+        "GENKM"
     ],
     "XGIDA": [
         "AEFES",
@@ -1649,7 +1670,8 @@
         "KBORU",
         "BAHKM",
         "MARMR",
-        "FRMPL"
+        "FRMPL",
+        "GENKM"
     ],
     "XTAST": [
         "AFYON",
@@ -1781,7 +1803,6 @@
         "BIMAS",
         "BIZIM",
         "BJKAS",
-        "YYAPI",
         "CRFSA",
         "CLEBI",
         "DOAS",
@@ -1805,6 +1826,7 @@
         "RYSAS",
         "SANKO",
         "SELEC",
+        "KUVVA",
         "SONME",
         "TCELL",
         "TEKTU",
@@ -1902,7 +1924,8 @@
         "ECOGR",
         "ARFYE",
         "UCAYM",
-        "BESTE"
+        "BESTE",
+        "ATATR"
     ],
     "XUSRD": [
         "AEFES",
@@ -2058,7 +2081,6 @@
         "BJKAS",
         "BLCYT",
         "BOSSA",
-        "YYAPI",
         "BRSAN",
         "BRYAT",
         "BSOKE",
@@ -2256,7 +2278,6 @@
         "POLHO",
         "SANFM",
         "TKNSA",
-        "YESIL",
         "AVHOL",
         "ETILR",
         "HLGYO",
@@ -2269,6 +2290,7 @@
         "LYDYE",
         "TMSN",
         "ODAS",
+        "PAGYO",
         "TURGG",
         "ACSEL",
         "AKSGY",
@@ -2293,6 +2315,7 @@
         "SAYAS",
         "BNTAS",
         "VERTU",
+        "CUSAN",
         "ISDMR",
         "IZFAS",
         "MSGYO",
@@ -2759,14 +2782,15 @@
         "DOFRB",
         "VAKFA",
         "PAHOL",
-        "ZERGY"
+        "ZERGY",
+        "ATATR"
     ],
     "XSDNZ": [
-        "MNDRS",
-        "ACSEL",
-        "AYDEM",
-        "MERCN",
-        "ECOGR"
+        "Menderes Tekstil",
+        "Acıselsan",
+        "Aydem Enerji",
+        "Mercan Kimya Sanayi",
+        "Ecogreen Enerji"
     ],
     "X030S": [
         "AEFES",
@@ -2950,108 +2974,7 @@
         "TUPRS",
         "PGSUS"
     ],
-    "X100C": [
-        "AEFES",
-        "AKBNK",
-        "AKSA",
-        "AKSEN",
-        "ALARK",
-        "ANSGR",
-        "ARCLK",
-        "ASELS",
-        "BIMAS",
-        "RALYH",
-        "BRSAN",
-        "BRYAT",
-        "BSOKE",
-        "BTCIM",
-        "CCOLA",
-        "CIMSA",
-        "DOAS",
-        "DOHOL",
-        "ECILC",
-        "EGEEN",
-        "EKGYO",
-        "ENKAI",
-        "EREGL",
-        "FENER",
-        "FROTO",
-        "GARAN",
-        "GSRAY",
-        "GUBRF",
-        "TURSG",
-        "HALKB",
-        "HEKTS",
-        "TRENJ",
-        "ISCTR",
-        "ISMEN",
-        "KCHOL",
-        "TRMET",
-        "TRALT",
-        "KRDMD",
-        "MGROS",
-        "OYAKC",
-        "OTKAR",
-        "PETKM",
-        "SAHOL",
-        "SASA",
-        "SISE",
-        "SKBNK",
-        "TAVHL",
-        "TCELL",
-        "THYAO",
-        "TKFEN",
-        "TOASO",
-        "TSKB",
-        "TSPOR",
-        "TTKOM",
-        "TTRAK",
-        "TUKAS",
-        "TUPRS",
-        "ULKER",
-        "VAKBN",
-        "VESTL",
-        "AGHOL",
-        "YKBNK",
-        "ZOREN",
-        "KUYAS",
-        "PGSUS",
-        "ODAS",
-        "MAVI",
-        "ENJSA",
-        "MPARK",
-        "SOKM",
-        "KONTR",
-        "TUREX",
-        "QUAGR",
-        "CANTE",
-        "GENIL",
-        "GESAN",
-        "YEOTK",
-        "MAGEN",
-        "MIATK",
-        "DAPGM",
-        "GRSEL",
-        "KCAER",
-        "KLRHO",
-        "ASTOR",
-        "EUPWR",
-        "GRTHO",
-        "CWENE",
-        "KTLEV",
-        "PASEU",
-        "IZENR",
-        "ENERY",
-        "REEDR",
-        "TABGD",
-        "PATEK",
-        "OBAMS",
-        "ALTNY",
-        "EFOR",
-        "GLRMK",
-        "DSTKF",
-        "BALSU"
-    ],
+    "X100C": [],
     "XKTUM": [
         "AKSA",
         "ALBRK",
@@ -3275,7 +3198,11 @@
         "FRMPL",
         "UCAYM",
         "AKHAN",
-        "BESTE"
+        "BESTE",
+        "EMPAE",
+        "GENKM",
+        "LXGYO",
+        "MCARD"
     ],
     "XK100": [
         "AKSA",
@@ -3880,7 +3807,6 @@
         "AVTUR",
         "AYGAZ",
         "BJKAS",
-        "YYAPI",
         "BRSAN",
         "BRYAT",
         "CCOLA",
@@ -3931,6 +3857,7 @@
         "SAHOL",
         "SELEC",
         "DUNYH",
+        "KUVVA",
         "SISE",
         "TAVHL",
         "TCELL",
@@ -3943,7 +3870,6 @@
         "DENGE",
         "SKYLP",
         "ORGE",
-        "YESIL",
         "AKYHO",
         "AVHOL",
         "ETILR",
@@ -4023,7 +3949,9 @@
         "TEHOL",
         "DOFRB",
         "UCAYM",
-        "BESTE"
+        "BESTE",
+        "EMPAE",
+        "MCARD"
     ],
     "XSKON": [
         "ADESE",
@@ -4050,7 +3978,33 @@
         "MEGMT",
         "MEYSU"
     ],
-    "XSKOC": [],
+    "XSKOC": [
+        "ASUZU",
+        "CELHA",
+        "DYOBY",
+        "FMIZP",
+        "FROTO",
+        "HEKTS",
+        "KARTN",
+        "KORDS",
+        "LOGO",
+        "MAKTK",
+        "MRSHL",
+        "NUHCM",
+        "SARKY",
+        "TUPRS",
+        "BRISA",
+        "POLHO",
+        "RTALB",
+        "OZRDN",
+        "ISKPL",
+        "SMRTG",
+        "BMSTL",
+        "KMPUR",
+        "HKTM",
+        "MARMR",
+        "GENKM"
+    ],
     "XSTKR": [
         "RUZYE",
         "BRKSN",
@@ -4064,10 +4018,6 @@
         "FRMPL"
     ],
     "XHARZ": [
-        "PATEK",
-        "BORSK",
-        "LMKDC",
-        "ALVES",
         "OBAMS",
         "ARTMS",
         "MOGAN",
@@ -4122,7 +4072,13 @@
         "UCAYM",
         "AKHAN",
         "NETCD",
-        "BESTE"
+        "BESTE",
+        "ATATR",
+        "EMPAE",
+        "SVGYO",
+        "GENKM",
+        "LXGYO",
+        "MCARD"
     ],
     "XTKJS": [
         "ALCTL",
@@ -4164,6 +4120,8 @@
         "ONRYT",
         "BINBN",
         "DOFRB",
-        "NETCD"
+        "NETCD",
+        "EMPAE",
+        "MCARD"
     ]
 }
