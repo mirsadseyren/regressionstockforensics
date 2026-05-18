@@ -283,13 +283,13 @@ with tab2:
         fig.add_trace(go.Scatter(x=daily_vals.index, y=daily_vals.values, mode='lines', name='Portföy Değeri'))
         fig.add_trace(go.Scatter(x=daily_vals.index, y=[start_capital]*len(daily_vals), mode='lines', name='Başlangıç', line=dict(dash='dash', color='gray')))
         fig.update_layout(title="Portföy Gelişimi", xaxis_title="Tarih", yaxis_title="TL")
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         
         # --- AYLIK GETİRİ TABLOSU ---
         st.subheader("📅 Aylık Performans Raporu")
         
         # Ay sonu değerlerini al
-        monthly_resampled = daily_vals.resample('M').last()
+        monthly_resampled = daily_vals.resample('ME').last()
         monthly_returns = monthly_resampled.pct_change() * 100
         
         # İlk ayın getirisini başlangıç sermayesine göre hesapla
@@ -304,7 +304,7 @@ with tab2:
         # Tabloyu göster
         st.dataframe(df_monthly.style.format({
             'Net Kar/Zarar (%)': "{:+.2f}%"
-        }).background_gradient(subset=['Net Kar/Zarar (%)'], cmap='RdYlGn', vmin=-15, vmax=15), use_container_width=True)
+        }).background_gradient(subset=['Net Kar/Zarar (%)'], cmap='RdYlGn', vmin=-15, vmax=15), width="stretch")
         
         # İşlem Geçmişi
         st.subheader("İşlem Geçmişi")
@@ -371,7 +371,7 @@ with tab3:
         st.write(f"**Slope (Eğim):** {slope:.5f}")
         st.write(f"**R-Squared:** {r_value**2:.4f}")
         
-        st.plotly_chart(fig2, use_container_width=True)
+        st.plotly_chart(fig2, width="stretch")
 
 # === TAB 4: OPPORTUNITY TIMELINE ===
 with tab4:
@@ -474,7 +474,7 @@ with tab4:
                 hovermode="x unified" # Aynı tarihteki tüm hisseleri bir arada görmek için
             )
             
-            st.plotly_chart(fig3, use_container_width=True)
+            st.plotly_chart(fig3, width="stretch")
             
             # Tablo Görünümü
             st.subheader("Fırsat Listesi")
