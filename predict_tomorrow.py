@@ -45,16 +45,41 @@ def main():
     tickers = get_tickers_from_file(STOX_FILE)
     all_data = load_data(tickers)
     
-    # 3. Calculate Today's Metrics
+    # 3. Calculate Metrics
     print("Calculating current technical indicators...")
     precalc = get_vectorized_metrics(all_data, lookback_days=20)
     
-    slopes = precalc['slopes'].iloc[-1]
-    r2 = precalc['r2'].iloc[-1]
-    discounts = precalc['discounts'].iloc[-1]
-    prices = precalc['prices'].iloc[-1]
+    target_date_str = input("\nHangi tarih için tahmin yapmak istersiniz? (Örn: 2024-05-15) [Boş bırakırsanız BUGÜN/YARIN için çalışır]: ").strip()
     
-    # Create DataFrame for today's candidates
+    if target_date_str:
+        target_date = pd.to_datetime(target_date_str)
+        valid_dates = precalc['prices'].index[precalc['prices'].index <= target_date]
+        if len(valid_dates) == 0:
+            print("Verilen tarihten önce borsa verisi bulunamadı!")
+            return
+        dt = valid_dates[-1]
+        print(f"Seçilen/En yakın işlem tarihi: {dt.strftime('%Y-%m-%d')}")
+        idx = precalc['prices'].index.get_loc(dt)
+    else:
+        dt = precalc['prices'].index[-1]
+        print(f"En son veri tarihi kullanılıyor: {dt.strftime('%Y-%m-%d')}")
+        idx = -1
+        
+    slopes = precalc['slopes'].iloc[idx]
+    r2 = precalc['r2'].iloc[idx]
+    discounts = precalc['discounts'].iloc[idx]
+    prices = precalc['prices'].iloc[idx]
+    
+    actual_pl_dict = {}
+    is_past_date = (idx != -1 and idx != len(precalc['prices']) - 1)
+    if is_past_date:
+        # If it's a past date, check the actual price 7 trading days later to see if model was right!
+        future_idx = idx + 7
+        if future_idx < len(precalc['prices']):
+            future_prices = precalc['prices'].iloc[future_idx]
+            actual_pl_dict = ((future_prices - prices) / prices * 100).to_dict()
+    
+    # Create DataFrame for candidates
     today_df = pd.DataFrame({
         'slope': slopes,
         'r2': r2,
@@ -113,14 +138,22 @@ def main():
         print(f"\n✅ Found {len(best_candidates)} highly reliable setups!")
         print("Top 15 Recommendations for Tomorrow:")
         
-    print("\n" + "="*85)
-    print(f"{'TICKER':<10} | {'PRICE':<8} | {'WIN RATE':<10} | {'EXP. PROFIT':<12} | {'SLOPE':<8} | {'R2':<6} | {'SCORE'}")
-    print("-" * 85)
-    
-    for ticker, row in best_candidates.head(15).iterrows():
-        t_name = ticker.replace('.IS', '')
-        print(f"{t_name:<10} | {row['price']:<8.2f} | {row['win_rate']:<9.1f}% | {row['exp_pl']:>7.2f}%     | {row['slope']:<8.4f} | {row['r2']:<6.2f} | {row['score']:<8.4f}")
-    print("="*85)
+    print("\n" + "="*100)
+    if is_past_date and actual_pl_dict:
+        print(f"{'TICKER':<10} | {'PRICE':<8} | {'WIN RATE':<10} | {'EXP. PROFIT':<12} | {'ACTUAL 7D %':<12} | {'SLOPE':<8} | {'R2':<6} | {'SCORE'}")
+        print("-" * 100)
+        for ticker, row in best_candidates.head(15).iterrows():
+            t_name = ticker.replace('.IS', '')
+            actual_pl = actual_pl_dict.get(ticker, np.nan)
+            actual_str = f"{actual_pl:>8.2f}%" if not pd.isna(actual_pl) else "N/A"
+            print(f"{t_name:<10} | {row['price']:<8.2f} | {row['win_rate']:<9.1f}% | {row['exp_pl']:>7.2f}%     | {actual_str:<12} | {row['slope']:<8.4f} | {row['r2']:<6.2f} | {row['score']:<8.4f}")
+    else:
+        print(f"{'TICKER':<10} | {'PRICE':<8} | {'WIN RATE':<10} | {'EXP. PROFIT':<12} | {'SLOPE':<8} | {'R2':<6} | {'SCORE'}")
+        print("-" * 100)
+        for ticker, row in best_candidates.head(15).iterrows():
+            t_name = ticker.replace('.IS', '')
+            print(f"{t_name:<10} | {row['price']:<8.2f} | {row['win_rate']:<9.1f}% | {row['exp_pl']:>7.2f}%     | {row['slope']:<8.4f} | {row['r2']:<6.2f} | {row['score']:<8.4f}")
+    print("="*100)
     
 if __name__ == "__main__":
     main()

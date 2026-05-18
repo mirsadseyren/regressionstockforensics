@@ -87,9 +87,6 @@ if st.sidebar.button("🔄 Verileri Güncelle"):
     st.cache_data.clear()
     st.rerun()
 
-
-
-# To make it cleaner, I will rewrite the button block and add the input just before it.
 num_indices = st.sidebar.number_input("Seçilecek Endeks Sayısı", min_value=1, max_value=50, value=6)
 
 if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
@@ -167,7 +164,7 @@ with st.spinner("Metrikler hesaplanıyor..."):
     precalc = get_metrics(all_data, lookback_days)
 
 # --- TABLAR ---
-tab1, tab2, tab3, tab4 = st.tabs(["🔍 Günlük Tarama", "📈 Simülasyon Backtest", "📊 Hisse Analizi", "📅 Fırsat Zaman Çizelgesi"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["🔍 Günlük Tarama", "📈 Simülasyon Backtest", "📊 Hisse Analizi", "📅 Fırsat Zaman Çizelgesi", "🤖 AI Tahmin Modeli"])
 
 # === TAB 1: GÜNLÜK TARAMA ===
 with tab1:
