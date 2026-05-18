@@ -490,3 +490,146 @@ with tab4:
         else:
             st.warning("Bu periyotta parametrelere uygun fırsat bulunamadı.")
 
+
+# === TAB 5: AI TAHMİN MODELİ ===
+with tab5:
+    st.header("🤖 Yapay Zeka (KNN) Tahmin Modeli")
+    st.markdown("Geçmişteki binlerce benzer işlemi analiz ederek geleceği tahmin eder.")
+    
+    col1, col2 = st.columns([3, 1])
+    
+    with col2:
+        if st.button("🔄 Öğrenme Matrisini Güncelle", help="Arkaplanda analyze_trades.py çalıştırılarak on binlerce geçmiş işlem yeniden taranır ve KNN modeli için veritabanı (CSV) güncellenir. Bu işlem 1-2 dakika sürebilir."):
+            with st.spinner("Geçmiş işlemler taranıyor ve öğrenme matrisi oluşturuluyor (Lütfen bekleyin)..."):
+                try:
+                    script_path = os.path.join(os.path.dirname(__file__), "analyze_trades.py")
+                    subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
+                    st.success("✅ Öğrenme Matrisi başarıyla güncellendi!")
+                except Exception as e:
+                    st.error(f"Matris güncellenirken hata oluştu: {e}")
+    
+    with col1:
+        matrix_file = os.path.join(os.path.dirname(__file__), 'historical_trade_metrics.csv')
+        if not os.path.exists(matrix_file):
+            st.warning("⚠️ historical_trade_metrics.csv bulunamadı! Lütfen yandaki butona tıklayarak matrisi oluşturun.")
+        else:
+            # Tarih Seçimi
+            ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş bir tarih seçerek modelin başarısını test edebilirsiniz)", value=last_available_date.date(), key="ai_target_date")
+            
+            if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
+                with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
+                    try:
+                        from sklearn.neighbors import NearestNeighbors
+                        from sklearn.preprocessing import StandardScaler
+                        
+                        # 1. Matrisi Yükle
+                        hist_df = pd.read_csv(matrix_file)
+                        st.caption(f"Veritabanından {len(hist_df):,} geçmiş işlem yüklendi.")
+                        
+                        # Özellikler ve Ölçeklendirme
+                        features = ['slope', 'r2', 'score']
+                        scaler = StandardScaler()
+                        X_hist_scaled = scaler.fit_transform(hist_df[features])
+                        
+                        # KNN Eğitimi
+                        K = 50
+                        knn = NearestNeighbors(n_neighbors=K, algorithm='auto')
+                        knn.fit(X_hist_scaled)
+                        
+                        # 2. Seçilen Tarih İçin Verileri Al
+                        target_dt = pd.Timestamp(ai_target_date)
+                        valid_dates = precalc['prices'].index[precalc['prices'].index <= target_dt]
+                        
+                        if len(valid_dates) == 0:
+                            st.error("Seçilen tarihten önce borsa verisi bulunamadı!")
+                        else:
+                            dt = valid_dates[-1]
+                            idx = precalc['prices'].index.get_loc(dt)
+                            
+                            slopes = precalc['slopes'].iloc[idx]
+                            r2 = precalc['r2'].iloc[idx]
+                            discounts = precalc['discounts'].iloc[idx]
+                            prices = precalc['prices'].iloc[idx]
+                            
+                            # Geçmiş bir tarihse gerçek veriyi hesapla
+                            actual_pl_dict = {}
+                            is_past_date = (idx != len(precalc['prices']) - 1)
+                            if is_past_date:
+                                future_idx = idx + 7
+                                if future_idx < len(precalc['prices']):
+                                    future_prices = precalc['prices'].iloc[future_idx]
+                                    actual_pl_dict = ((future_prices - prices) / prices * 100).to_dict()
+                            
+                            today_df = pd.DataFrame({
+                                'slope': slopes,
+                                'r2': r2,
+                                'score': discounts,
+                                'price': prices
+                            })
+                            
+                            today_df = today_df[(today_df['slope'] > 0) & (today_df['r2'] > 0.1) & (today_df['price'] > 0)]
+                            
+                            if today_df.empty:
+                                st.warning("Bu tarih için uygun bir sinyal bulunamadı (Filtrelere takıldı).")
+                            else:
+                                # 3. KNN ile Tahmin
+                                X_today_scaled = scaler.transform(today_df[features])
+                                distances, indices = knn.kneighbors(X_today_scaled)
+                                
+                                expected_pl = []
+                                win_rates = []
+                                
+                                for i in range(len(today_df)):
+                                    neighbor_indices = indices[i]
+                                    neighbor_trades = hist_df.iloc[neighbor_indices]
+                                    
+                                    avg_pl = neighbor_trades['pl_pct'].mean()
+                                    win_rate = (neighbor_trades['pl_pct'] > 0).mean() * 100
+                                    
+                                    expected_pl.append(avg_pl)
+                                    win_rates.append(win_rate)
+                                    
+                                today_df['exp_pl'] = expected_pl
+                                today_df['win_rate'] = win_rates
+                                today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
+                                
+                                best_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
+                                
+                                if best_candidates.empty:
+                                    st.warning("⚠️ Yapay zeka modeli bu tarih için güvenilir bir işlem bulamadı. Nakitte kalınması tavsiye edilebilir.")
+                                    best_candidates = today_df.sort_values(by='confidence_score', ascending=False).head(5)
+                                    st.info("İşte en az riskli görünen 5 aday:")
+                                else:
+                                    best_candidates = best_candidates.sort_values(by='confidence_score', ascending=False).head(15)
+                                    st.success(f"✅ En güvenilir {len(best_candidates)} hisse bulundu! (Tarih: {dt.strftime('%Y-%m-%d')})")
+                                
+                                # Sonuçları Tablo Olarak Göster
+                                results = []
+                                for ticker, row in best_candidates.iterrows():
+                                    t_name = ticker.replace('.IS', '')
+                                    res = {
+                                        "Hisse": t_name,
+                                        "Fiyat": round(row['price'], 2),
+                                        "Kazanma İhtimali (%)": round(row['win_rate'], 1),
+                                        "Beklenen 7G Kâr (%)": round(row['exp_pl'], 2),
+                                        "Güven Skoru": round(row['confidence_score'], 3),
+                                        "Eğim": round(row['slope'], 4),
+                                        "R²": round(row['r2'], 2),
+                                        "Score": round(row['score'], 4)
+                                    }
+                                    if is_past_date and actual_pl_dict:
+                                        actual = actual_pl_dict.get(ticker, np.nan)
+                                        res["Gerçekleşen 7G Kâr (%)"] = round(actual, 2) if not pd.isna(actual) else "N/A"
+                                    results.append(res)
+                                    
+                                df_res = pd.DataFrame(results)
+                                
+                                # Stilize tablo
+                                styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)'], cmap='Greens')
+                                if is_past_date and actual_pl_dict:
+                                    styled_df = styled_df.background_gradient(subset=['Gerçekleşen 7G Kâr (%)'], cmap='RdYlGn')
+                                    
+                                st.dataframe(styled_df, use_container_width=True)
+                                
+                    except Exception as e:
+                        st.error(f"Tahmin modeli çalıştırılırken bir hata oluştu: {str(e)}")
