@@ -28,7 +28,7 @@ def get_indices_and_stocks():
     # Initialize Driver
     print("Initializing Browser...")
     options = uc.ChromeOptions()
-    # options.add_argument('--headless') # Headless often gets detected more easily, keep it off for debugging if needed, or on for speed.
+    options.add_argument('--headless') # Headless often gets detected more easily, keep it off for debugging if needed, or on for speed.
     # User requested to just write the program, let's try headless first to be less intrusive, 
     # but if it fails we might need to remove it. For now, let's keep it visible so user can see it working?
     # Actually, headless is better for background tasks unless debugging.
@@ -37,15 +37,15 @@ def get_indices_and_stocks():
     # Disable headless to avoid detection
     # options.add_argument('--headless') 
     
-    # Fix for version mismatch 144
-    driver = uc.Chrome(options=options, version_main=144)
+    # version_main parametresini kaldırdık: uc otomatik olarak yüklü Chrome sürümünü algılar.
+    driver = uc.Chrome(options=options)
     
     results = {}
     try:
         print("Fetching indices list...")
         driver.get(indices_url)
         # Wait for table to load by waiting for a known element (Normal button)
-        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, "//span[text()='Normal']"))) 
+        WebDriverWait(driver, 15).until(EC.presence_of_element_located((By.XPATH, "//div[@id='view-selector']/div[1]/div[1]"))) 
         
         try:
             WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "(//span[text()='Normal'])[1]"))).click()
@@ -99,7 +99,7 @@ def get_indices_and_stocks():
 def tickers_in_indices():
     settings = {
         'headless': False,
-        'version_main': 144
+        # version_main kaldırıldı: uc yüklü Chrome sürümünü otomatik algılar (şu an 148)
     }
     endeksler = "endeksler/endeksler.json"
     with open(endeksler, "r", encoding="utf-8") as f:
@@ -130,24 +130,24 @@ def tickers_in_indices():
         print(f"Processing {index_name}...")
         
         try:
-            driver.get(url)
+            driver.get(url + "-components")
             # random sleep to be human-like
             time.sleep(3) 
             
             # Click components tab
             # We use try/except for navigation steps to be robust
-            try:
-                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "//li[@data-test='Bileşenler']//a[1]"))).click()
-            except Exception as e:
-                print(f"Could not click Components for {index_name}, might be empty or different layout. Error: {e}")
-                continue
+            #try:
+            #    WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, "(//a[contains(@class,'inline-block cursor-pointer')])[1]"))).click()
+            #except Exception as e:
+            #    print(f"Could not click Components for {index_name}, might be empty or different layout. Error: {e}")
+            #    continue
                 
-            time.sleep(2)
+            time.sleep(1)
             
             # Try to expand list
             try:
-                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Normal']"))).click()
-                WebDriverWait(driver, 5).until(EC.element_to_be_clickable((By.XPATH, "//span[text()='Geniş']"))).click()
+                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "//div[@id='view-selector']/div[1]/div[1]"))).click()
+                WebDriverWait(driver, 100).until(EC.element_to_be_clickable((By.XPATH, "(//span[contains(@class,'relative flex')])[5]"))).click()
             except:
                 # Layout might be already correct or selection not needed
                 pass
@@ -159,7 +159,7 @@ def tickers_in_indices():
             # This xpath selects ALL stock names on the card view
             # Wait for elements to be visible first
             try:
-                WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.XPATH, "//span[contains(@class,'block overflow-hidden')]")))
+                WebDriverWait(driver, 100).until(EC.presence_of_all_elements_located((By.XPATH, "//span[contains(@class,'block overflow-hidden')]")))
             except:
                 print(f"Time out waiting for stocks for {index_name}")
 
@@ -189,7 +189,7 @@ def tickers_in_indices():
 def indices_performance():
     settings = {
         'headless': False,
-        'version_main': 144
+        # version_main kaldırıldı: uc yüklü Chrome sürümünü otomatik algılar (şu an 148)
     }
     endeksler = "endeksler/endeksler.json"
     with open(endeksler, "r", encoding="utf-8") as f:
