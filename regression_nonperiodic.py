@@ -296,7 +296,7 @@ if __name__ == "__main__":
 def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, min_r2=MIN_R_SQUARED, 
                    stop_loss_rate=STOP_LOSS_RATE, slope_stop_factor=SLOPE_STOP_FACTOR,
                    rebalance_freq=REBALANCE_FREQ, start_capital=START_CAPITAL, commission_rate=COMMISSION_RATE,
-                   max_atr_percent=MAX_ATR_PERCENT, progress_callback=None, silent=False):
+                   max_atr_percent=MAX_ATR_PERCENT, progress_callback=None, silent=False, metrics_collector=None):
                    
     # Veri Ayrıştırma
     if isinstance(all_data.columns, pd.MultiIndex):
@@ -401,8 +401,16 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                     f"P/L: %{pl_pct:.2f} | Peak: {item['max_p']:.2f}"
                 ])
                 
+                if metrics_collector is not None:
+                    metrics_collector.append({
+                        'pl_pct': pl_pct,
+                        'slope': item['slope'],
+                        'r2': item.get('r2', 0),
+                        'score': item.get('score', 0)
+                    })
+                
                 active_portfolio.remove(item)
-                sold_today = True 
+                sold_today = True
             else:
                 item['trading_days_held'] += 1
 
@@ -426,6 +434,8 @@ def run_simulation(all_data, lookback_days=LOOKBACK_DAYS, min_slope=MIN_SLOPE, m
                             'b': buy_price,
                             'max_p': buy_price,
                             'slope': top_pick['slope'],
+                            'r2': top_pick['r2'],
+                            'score': top_pick['score'],
                             'buy_dt': dt,                  
                             'trading_days_held': 0         
                         })
