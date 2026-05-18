@@ -1,5 +1,13 @@
 import pandas as pd
 import numpy as np
+import sys
+
+# Configure matplotlib for headless environments if --no-plot is passed
+show_plot = "--no-plot" not in sys.argv
+if not show_plot:
+    import matplotlib
+    matplotlib.use('Agg')
+
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from sklearn.cluster import DBSCAN
@@ -129,55 +137,58 @@ def main():
     df.to_csv('historical_trade_metrics.csv', index=False)
     
     # 5. Scatter Plot Visualization (3D)
-    print("\nPreparing 3D Scatter Plot...")
+    if show_plot:
+        print("\nPreparing 3D Scatter Plot...")
+        
+        fig = plt.figure(figsize=(12, 8))
+        ax = fig.add_subplot(111, projection='3d')
+        
+        # Define color map based on P/L %
+        # Profitable trades = Green, Losing trades = Red
+        colors = ['lime' if p > 0 else 'red' for p in df['pl_pct']]
+        sizes = [abs(p) + 10 for p in df['pl_pct']] # Larger dots for bigger wins/losses
+        
+        scatter = ax.scatter(
+            df['slope'], 
+            df['r2'], 
+            df['score'], 
+            c=colors, 
+            s=sizes, 
+            alpha=0.6,
+            edgecolors='w',
+            linewidth=0.5
+        )
+        
+        # Plot cluster centers (calculated as mean of points in cluster)
+        first_x_plotted = False
+        for i, row in valid_clusters.iterrows():
+            cid = row['cluster']
+            center = [row['avg_slope'], row['avg_r2'], row['avg_score']]
+            if cid == best_cluster_id:
+                ax.scatter(center[0], center[1], center[2], c='cyan', marker='*', s=500, label='Best Cluster Center')
+            else:
+                ax.scatter(center[0], center[1], center[2], c='magenta', marker='X', s=200, label='Other Centers' if not first_x_plotted else "")
+                first_x_plotted = True
     
-    fig = plt.figure(figsize=(12, 8))
-    ax = fig.add_subplot(111, projection='3d')
-    
-    # Define color map based on P/L %
-    # Profitable trades = Green, Losing trades = Red
-    colors = ['lime' if p > 0 else 'red' for p in df['pl_pct']]
-    sizes = [abs(p) + 10 for p in df['pl_pct']] # Larger dots for bigger wins/losses
-    
-    scatter = ax.scatter(
-        df['slope'], 
-        df['r2'], 
-        df['score'], 
-        c=colors, 
-        s=sizes, 
-        alpha=0.6,
-        edgecolors='w',
-        linewidth=0.5
-    )
-    
-    # Plot cluster centers (calculated as mean of points in cluster)
-    first_x_plotted = False
-    for i, row in valid_clusters.iterrows():
-        cid = row['cluster']
-        center = [row['avg_slope'], row['avg_r2'], row['avg_score']]
-        if cid == best_cluster_id:
-            ax.scatter(center[0], center[1], center[2], c='cyan', marker='*', s=500, label='Best Cluster Center')
-        else:
-            ax.scatter(center[0], center[1], center[2], c='magenta', marker='X', s=200, label='Other Centers' if not first_x_plotted else "")
-            first_x_plotted = True
-
-    ax.set_title('Trade Metrics 3D Scatter (Green=Profit, Red=Loss)', fontsize=14)
-    ax.set_xlabel('Slope (Eğim)')
-    ax.set_ylabel('R-Squared (R²)')
-    ax.set_zlabel('Score (Distance from Reg)')
-    
-    # Create legend manually
-    from matplotlib.lines import Line2D
-    legend_elements = [
-        Line2D([0], [0], marker='o', color='w', label='Profitable', markerfacecolor='lime', markersize=10),
-        Line2D([0], [0], marker='o', color='w', label='Loss', markerfacecolor='red', markersize=10),
-        Line2D([0], [0], marker='*', color='w', label='Best Cluster', markerfacecolor='cyan', markersize=15),
-        Line2D([0], [0], marker='X', color='w', label='Other Clusters', markerfacecolor='magenta', markersize=10)
-    ]
-    ax.legend(handles=legend_elements)
-    
-    plt.tight_layout()
-    plt.show()
+        ax.set_title('Trade Metrics 3D Scatter (Green=Profit, Red=Loss)', fontsize=14)
+        ax.set_xlabel('Slope (Eğim)')
+        ax.set_ylabel('R-Squared (R²)')
+        ax.set_zlabel('Score (Distance from Reg)')
+        
+        # Create legend manually
+        from matplotlib.lines import Line2D
+        legend_elements = [
+            Line2D([0], [0], marker='o', color='w', label='Profitable', markerfacecolor='lime', markersize=10),
+            Line2D([0], [0], marker='o', color='w', label='Loss', markerfacecolor='red', markersize=10),
+            Line2D([0], [0], marker='*', color='w', label='Best Cluster', markerfacecolor='cyan', markersize=15),
+            Line2D([0], [0], marker='X', color='w', label='Other Clusters', markerfacecolor='magenta', markersize=10)
+        ]
+        ax.legend(handles=legend_elements)
+        
+        plt.tight_layout()
+        plt.show()
+    else:
+        print("\nSkipping 3D Scatter Plot (--no-plot flag detected).")
 
 if __name__ == "__main__":
     main()
