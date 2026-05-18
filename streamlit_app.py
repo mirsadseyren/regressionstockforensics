@@ -488,24 +488,6 @@ with tab4:
                 'Ortalama Hacim': "{:,.0f}"
             }).background_gradient(subset=['Alım Fırsatı (%)'], cmap='RdYlGn'))
         else:
-            st.warning("Bu periyotta parametrelere uygun fırsat bulunamadı.")
-
-
-# === TAB 5: AI TAHMİN MODELİ ===
-with tab5:
-    st.header("🤖 Yapay Zeka (KNN) Tahmin Modeli")
-    st.markdown("Geçmişteki binlerce benzer işlemi analiz ederek geleceği tahmin eder.")
-    
-            # Tarih Seçimi
-            ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş bir tarih seçerek modelin başarısını test edebilirsiniz)", value=last_available_date.date(), key="ai_target_date")
-            
-            if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
-                with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
-                    try:
-                        from sklearn.neighbors import NearestNeighbors
-                        from sklearn.preprocessing import StandardScaler
-                        
-                        # 1. Matrisi Yükle
                         hist_df = pd.read_csv(matrix_file)
                         st.caption(f"Veritabanından {len(hist_df):,} geçmiş işlem yüklendi.")
                         
