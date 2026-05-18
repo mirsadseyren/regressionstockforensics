@@ -22,7 +22,7 @@ from regression_nonperiodic import (
 
 st.set_page_config(page_title="Regression Bot Dashboard", layout="wide")
 
-st.title("🚀 Momentum Regression Bot (Non-Periodic)")
+st.title("Momentum Regression Bot (Non-Periodic)")
 
 # --- SIDEBAR: Ayarlar ---
 st.sidebar.header("⚙️ Strateji Parametreleri")
@@ -90,7 +90,7 @@ if st.sidebar.button("🔄 Verileri Güncelle"):
 
 
 # To make it cleaner, I will rewrite the button block and add the input just before it.
-num_indices = st.sidebar.number_input("Seçilecek Endeks Sayısı", min_value=1, max_value=50, value=10)
+num_indices = st.sidebar.number_input("Seçilecek Endeks Sayısı", min_value=1, max_value=50, value=6)
 
 if st.sidebar.button("📊 Endeksleri Analiz Et ve Getir"):
     with st.sidebar.status("Endeks analizi yapılıyor...", expanded=True) as status:
