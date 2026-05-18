@@ -117,27 +117,39 @@ def main():
     all_data = load_data(list(all_needed_tickers))
     print(f"Data Loaded. Shape: {all_data.shape}")
     
-    # 3. Define Parameter Grid
-    # Refined grid based on previous best
-    param_grid = {
-        'lookback': [15, 20, 25, 30],
-        'slope': [0.02, 0.025, 0.03], # Reduced for speed as we added another dimension
-        'r2': [0.40, 0.50, 0.60, 0.70, 0.80, 0.90],
-        'stop_loss': [0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90],
-        'atr': [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90],
-        'slope_stop': [0.0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
+    # 3. Define Parameter Ranges for Random Search
+    import random
+    param_ranges = {
+        'lookback': [10, 15, 20, 25, 30, 35, 40],
+        'slope': [0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
+        'r2': [0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90],
+        'stop_loss': [0.10, 0.15, 0.20, 0.25, 0.30, 0.35, 0.40, 0.50],
+        'atr': [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80],
+        'slope_stop': [0.0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04],
         'rebalance': ['3D', '7D', '15D', '30D', '60D'],
         'num_indices': list(range(1, 11)) # 1 to 10
     }
     
-    # Adjust grid size as needed. Currently it can generate millions of combinations.
-    # Be careful with adding too many options.
-    param_grid['lookback'] = [15, 20, 25]
-    param_grid['slope'] = [0.01, 0.02, 0.03]
+    # 3.1 Random Search Configuration
+    MAX_ITERATIONS = 250 # Determines how fast it finishes. 250 is usually ~2-3 mins
     
-    keys = param_grid.keys()
-    combinations = list(itertools.product(*param_grid.values()))
-    print(f"Total Combinations to Test: {len(combinations)}")
+    print(f"Generating {MAX_ITERATIONS} random parameter combinations (Random Search)...")
+    combinations_set = set()
+    while len(combinations_set) < MAX_ITERATIONS:
+        combo = (
+            random.choice(param_ranges['lookback']),
+            random.choice(param_ranges['slope']),
+            random.choice(param_ranges['r2']),
+            random.choice(param_ranges['stop_loss']),
+            random.choice(param_ranges['atr']),
+            random.choice(param_ranges['slope_stop']),
+            random.choice(param_ranges['rebalance']),
+            random.choice(param_ranges['num_indices'])
+        )
+        combinations_set.add(combo)
+        
+    combinations = list(combinations_set)
+    print(f"Total Combinations to Test: {len(combinations)} (out of millions possible)")
     
     # 4. Run Optimization
     start_time = time.time()
@@ -150,8 +162,8 @@ def main():
     
     with multiprocessing.Pool(processes=num_workers, initializer=init_worker, initargs=(all_data, ticker_map)) as pool:
         # Map tasks
-        # Limit chunk_size to 100 so the progress bar updates more frequently
-        chunk_size = min(100, max(1, len(combinations) // (num_workers * 4)))
+        # Limit chunk_size to 1 so the progress bar updates immediately for every single simulation
+        chunk_size = 1
         
         # tqdm progress bar
         pbar = tqdm(total=len(combinations), desc="Optimizing")
