@@ -127,11 +127,11 @@ def main():
         'atr': [0.10, 0.20, 0.30, 0.40, 0.50, 0.60, 0.70, 0.80, 0.90],
         'slope_stop': [0.0, 0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04, 0.045, 0.05],
         'rebalance': ['3D', '7D', '15D', '30D', '60D'],
-        'num_indices': list(range(1, 21)) # 1 to 10
+        'num_indices': list(range(1, 11)) # 1 to 10
     }
     
-    # Adjust grid size as needed. Currently 2*1*1*1*1*2*2*10 = 80 combinations. Very fast.
-    # Let's expand a bit if it's too small.
+    # Adjust grid size as needed. Currently it can generate millions of combinations.
+    # Be careful with adding too many options.
     param_grid['lookback'] = [15, 20, 25]
     param_grid['slope'] = [0.01, 0.02, 0.03]
     
@@ -150,7 +150,8 @@ def main():
     
     with multiprocessing.Pool(processes=num_workers, initializer=init_worker, initargs=(all_data, ticker_map)) as pool:
         # Map tasks
-        chunk_size = max(1, len(combinations) // (num_workers * 4))
+        # Limit chunk_size to 100 so the progress bar updates more frequently
+        chunk_size = min(100, max(1, len(combinations) // (num_workers * 4)))
         
         # tqdm progress bar
         pbar = tqdm(total=len(combinations), desc="Optimizing")
