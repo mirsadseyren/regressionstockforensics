@@ -496,23 +496,6 @@ with tab5:
     st.header("🤖 Yapay Zeka (KNN) Tahmin Modeli")
     st.markdown("Geçmişteki binlerce benzer işlemi analiz ederek geleceği tahmin eder.")
     
-    col1, col2 = st.columns([3, 1])
-    
-    with col2:
-        if st.button("🔄 Öğrenme Matrisini Güncelle", help="Arkaplanda analyze_trades.py çalıştırılarak on binlerce geçmiş işlem yeniden taranır ve KNN modeli için veritabanı (CSV) güncellenir. Bu işlem 1-2 dakika sürebilir."):
-            with st.spinner("Geçmiş işlemler taranıyor ve öğrenme matrisi oluşturuluyor (Lütfen bekleyin)..."):
-                try:
-                    script_path = os.path.join(os.path.dirname(__file__), "analyze_trades.py")
-                    subprocess.run([sys.executable, script_path], capture_output=True, text=True, check=True)
-                    st.success("✅ Öğrenme Matrisi başarıyla güncellendi!")
-                except Exception as e:
-                    st.error(f"Matris güncellenirken hata oluştu: {e}")
-    
-    with col1:
-        matrix_file = os.path.join(os.path.dirname(__file__), 'historical_trade_metrics.csv')
-        if not os.path.exists(matrix_file):
-            st.warning("⚠️ historical_trade_metrics.csv bulunamadı! Lütfen yandaki butona tıklayarak matrisi oluşturun.")
-        else:
             # Tarih Seçimi
             ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş bir tarih seçerek modelin başarısını test edebilirsiniz)", value=last_available_date.date(), key="ai_target_date")
             
