@@ -502,13 +502,10 @@ with tab5:
         if st.button("🔄 Öğrenme Matrisini Güncelle", help="Arkaplanda analyze_trades.py çalıştırılarak on binlerce geçmiş işlem yeniden taranır ve KNN modeli için veritabanı (CSV) güncellenir. Bu işlem 1-2 dakika sürebilir."):
             with st.spinner("Geçmiş işlemler taranıyor ve öğrenme matrisi oluşturuluyor (Lütfen bekleyin)..."):
                 try:
-                    import sys
-                    import subprocess
-                    script_path = os.path.join(os.path.dirname(__file__), "analyze_trades.py")
-                    subprocess.run([sys.executable, script_path, "--no-plot"], capture_output=True, text=True, check=True)
+                    import analyze_trades
+                    # Veriyi yeniden yüklememek ve RAM şişmesini önlemek için doğrudan fonksiyona gönderiyoruz
+                    analyze_trades.main(all_data=all_data, show_plot_flag=False)
                     st.success("✅ Öğrenme Matrisi başarıyla güncellendi!")
-                except subprocess.CalledProcessError as e:
-                    st.error(f"Matris güncellenirken hata oluştu. Hata Çıktısı: {e.stderr}")
                 except Exception as e:
                     st.error(f"Matris güncellenirken beklenmedik hata oluştu: {e}")
                     

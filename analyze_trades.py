@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import sys
+import gc
 
 # Configure matplotlib for headless environments if --no-plot is passed
 show_plot = "--no-plot" not in sys.argv
@@ -10,7 +11,7 @@ if not show_plot:
 
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from sklearn.cluster import DBSCAN
+from sklearn.cluster import MiniBatchKMeans
 from sklearn.preprocessing import StandardScaler
 import warnings
 
@@ -22,18 +23,25 @@ from regression_nonperiodic import (
 
 warnings.filterwarnings('ignore')
 
-def main():
+def main(all_data=None, show_plot_flag=None):
+    if show_plot_flag is not None:
+        global show_plot
+        show_plot = show_plot_flag
+        
     print("--- TRADES ANALYSIS & K-MEANS CLUSTERING ---")
     
     # 1. Load Data
-    tickers = get_tickers_from_file(STOX_FILE)
-    if not tickers:
-        print("No tickers found!")
-        return
-        
-    print(f"Loading data for {len(tickers)} tickers...")
-    all_data = load_data(tickers)
-    print("Data loaded successfully.")
+    if all_data is None:
+        tickers = get_tickers_from_file(STOX_FILE)
+        if not tickers:
+            print("No tickers found!")
+            return
+            
+        print(f"Loading data for {len(tickers)} tickers...")
+        all_data = load_data(tickers)
+        print("Data loaded successfully.")
+    else:
+        print("Data provided via function arguments.")
     
     # 2. Gather ALL possible trades using Vectorized Metrics
     print("\nRunning vectorized analysis to gather ALL possible trade signals (No portfolio constraints)...")
@@ -64,6 +72,10 @@ def main():
     valid_score = discounts[mask].stack()
     valid_pl = pl_pct_matrix[mask].stack()
     
+    # Free intermediate memory
+    del prices, future_prices, pl_pct_matrix, slopes, r2, discounts, mask
+    gc.collect()
+    
     # Combine into a DataFrame
     metrics_df = pd.DataFrame({
         'slope': valid_slopes,
@@ -72,17 +84,21 @@ def main():
         'pl_pct': valid_pl
     }).dropna() # Drop NAs (like the last 7 days where future price is unknown)
     
-    metrics_collector = metrics_df.to_dict('records')
+    # Free more memory
+    del valid_slopes, valid_r2, valid_score, valid_pl
+    gc.collect()
     
-    if not metrics_collector:
+    df = metrics_df.copy()
+    del metrics_df
+    gc.collect()
+    
+    if len(df) == 0:
         print("No trades were made! Try relaxing parameters even more.")
         return
         
-    print(f"\nCollected data for {len(metrics_collector)} total potential trades!")
+    print(f"\nCollected data for {len(df)} total potential trades!")
     
     # 3. Prepare Data for Clustering
-    df = pd.DataFrame(metrics_collector)
-    
     # Features for clustering
     X = df[['slope', 'r2', 'score']].copy()
     
@@ -90,14 +106,17 @@ def main():
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     
-    # We want to find clusters using DBSCAN
-    dbscan = DBSCAN(eps=0.5, min_samples=20) # You can adjust eps and min_samples to tune the clustering sensitivity
-    df['cluster'] = dbscan.fit_predict(X_scaled)
+    del X
+    gc.collect()
+    
+    # We want to find clusters using MiniBatchKMeans to prevent memory crashes (DBSCAN uses too much RAM)
+    kmeans = MiniBatchKMeans(n_clusters=10, random_state=42, batch_size=10000)
+    df['cluster'] = kmeans.fit_predict(X_scaled)
     
     total_trades = len(df)
     
     # 4. Analyze Clusters
-    print("\n--- DBSCAN CLUSTER ANALYSIS ---")
+    print("\n--- K-MEANS CLUSTER ANALYSIS ---")
     cluster_stats = df.groupby('cluster').agg(
         trade_count=('pl_pct', 'count'),
         avg_pl=('pl_pct', 'mean'),
@@ -116,16 +135,11 @@ def main():
     print(f"{'Cluster':<8} | {'Count':<6} | {'Opp %':<7} | {'Avg P/L %':<10} | {'Win Rate %':<11} | {'Avg Slope':<10} | {'Avg R2':<8} | {'Avg Score (Dist)'}")
     print("-" * 100)
     for _, row in cluster_stats.iterrows():
-        c_name = f"C-{int(row['cluster'])}" if row['cluster'] != -1 else "Noise(-1)"
+        c_name = f"C-{int(row['cluster'])}"
         print(f"{c_name:<8} | {int(row['trade_count']):<6} | {row['opp_pct']:<7.2f} | {row['avg_pl']:<10.2f} | {row['win_rate']:<11.2f} | {row['avg_slope']:<10.4f} | {row['avg_r2']:<8.2f} | {row['avg_score']:<8.4f}")
         
-    valid_clusters = cluster_stats[cluster_stats['cluster'] != -1]
-    if not valid_clusters.empty:
-        best_cluster_data = valid_clusters.iloc[0]
-        best_cluster_id = best_cluster_data['cluster']
-    else:
-        best_cluster_data = cluster_stats.iloc[0]
-        best_cluster_id = best_cluster_data['cluster']
+    best_cluster_data = cluster_stats.iloc[0]
+    best_cluster_id = best_cluster_data['cluster']
     
     print("\n💡 OPTIMAL PARAMETER RECOMMENDATION (Based on best cluster):")
     print(f"Recommended Min Slope: ~ {best_cluster_data['avg_slope']:.4f}")
@@ -159,9 +173,9 @@ def main():
             linewidth=0.5
         )
         
-        # Plot cluster centers (calculated as mean of points in cluster)
+        # Plot cluster centers
         first_x_plotted = False
-        for i, row in valid_clusters.iterrows():
+        for i, row in cluster_stats.iterrows():
             cid = row['cluster']
             center = [row['avg_slope'], row['avg_r2'], row['avg_score']]
             if cid == best_cluster_id:
@@ -188,7 +202,7 @@ def main():
         plt.tight_layout()
         plt.show()
     else:
-        print("\nSkipping 3D Scatter Plot (--no-plot flag detected).")
+        print("\nSkipping 3D Scatter Plot (--no-plot flag or show_plot_flag=False detected).")
 
 if __name__ == "__main__":
     main()
