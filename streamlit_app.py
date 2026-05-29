@@ -625,10 +625,35 @@ with tab5:
                                     
                                 df_res = pd.DataFrame(results)
                                 
+                                # Gerçekleşen 7G Kâr sütunu için mutlak yeşil/kırmızı renklendirme
+                                def color_actual_pl(val):
+                                    """Kâr yeşil, zarar kırmızı - büyüklüğe göre yoğunluk artar."""
+                                    if val == "N/A" or pd.isna(val):
+                                        return ''
+                                    try:
+                                        v = float(val)
+                                    except (ValueError, TypeError):
+                                        return ''
+                                    # Yoğunluğu belirle: max ±15% civarında tam doygunluk
+                                    intensity = min(abs(v) / 15.0, 1.0)
+                                    if v > 0:
+                                        # Yeşil: rgba(33, 195, 90) -> beyazdan yeşile
+                                        r = int(255 - (255 - 33) * intensity)
+                                        g = int(255 - (255 - 195) * intensity)
+                                        b = int(255 - (255 - 90) * intensity)
+                                        text_color = 'white' if intensity > 0.4 else '#1a1a2e'
+                                    else:
+                                        # Kırmızı: rgba(255, 75, 75) -> beyazdan kırmızıya
+                                        r = int(255 - (255 - 255) * intensity)
+                                        g = int(255 - (255 - 75) * intensity)
+                                        b = int(255 - (255 - 75) * intensity)
+                                        text_color = 'white' if intensity > 0.4 else '#1a1a2e'
+                                    return f'background-color: rgb({r},{g},{b}); color: {text_color}; font-weight: bold'
+                                
                                 # Stilize tablo
                                 styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)'], cmap='Greens')
-                                if is_past_date and actual_pl_dict:
-                                    styled_df = styled_df.background_gradient(subset=['Gerçekleşen 7G Kâr (%)'], cmap='RdYlGn')
+                                if is_past_date and actual_pl_dict and 'Gerçekleşen 7G Kâr (%)' in df_res.columns:
+                                    styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 7G Kâr (%)'])
                                     
                                 st.dataframe(styled_df, use_container_width=True)
                                 

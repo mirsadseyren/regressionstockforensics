@@ -19,9 +19,9 @@ warnings.filterwarnings('ignore')
 
 def main():
     parser = argparse.ArgumentParser(description="Portfolio Backtest using ML/KNN Predictions")
-    parser.add_argument('-n', '--num-stocks', type=int, default=3, help="Maksimum tutulacak hisse sayısı (default: 3)")
+    parser.add_argument('-n', '--num-stocks', type=int, default=2, help="Maksimum tutulacak hisse sayısı (default: 3)")
     parser.add_argument('-s', '--stop-loss', type=float, default=0.05, help="Zarar kesme (Trailing Stop) yüzdesi (default: 0.05 = %%5)")
-    parser.add_argument('-d', '--hold-days', type=int, default=7, help="Maksimum elde tutma gün sayısı (default: 7)")
+    parser.add_argument('-d', '--hold-days', type=int, default=10, help="Maksimum elde tutma gün sayısı (default: 7)")
     
     args = parser.parse_args()
     
