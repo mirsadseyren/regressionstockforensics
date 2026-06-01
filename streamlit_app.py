@@ -67,19 +67,9 @@ def get_data(force=False):
     if not tickers:
         return None
     
-    # Veriyi indir veya cache'den yükle
+    # Veriyi indir veya cache'den yükle (load_data artık kendi içinde fix_cache ve get_clean_data yapıyor)
     data = load_data(tickers, force_refresh=force)
-    
-    # Veriyi fix_cache.py'deki mantıkla düzelt
-    if data is not None and not data.empty:
-        data = fix_cache(data)
-        
-        # Eğer yeni veri indirildiyse, düzeltilmiş halini tekrar cache dosyasına yaz
-        if force:
-            from regression_nonperiodic import DATA_CACHE_FILE
-            data.to_pickle(DATA_CACHE_FILE)
-            
-    return get_clean_data(data)
+    return data
 
 # Yan menüye yenileme butonu
 if st.sidebar.button("🔄 Verileri Güncelle"):

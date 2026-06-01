@@ -47,7 +47,7 @@ def load_data(tickers, force_refresh=False):
             data = pd.read_pickle(DATA_CACHE_FILE)
             if hasattr(data, 'columns') and 'Volume' in data.columns:
                 print("Güncel veriler cache'den yüklendi.")
-                return data
+                return get_clean_data(data)
     
     print(f"Yeni veriler indiriliyor (yfinance)... {'(Force Refresh)' if force_refresh else ''}")
     data = yf.download(tickers, start=download_start, auto_adjust=True)
@@ -81,11 +81,16 @@ def load_data(tickers, force_refresh=False):
                     # print(f"{t} hata: {e}")
                     pass
         
+        # --- VERİ DÜZELTME (FIX CACHE) ---
+        print("\nVeriler düzeltiliyor (fix_cache) ve boşluklar dolduruluyor...")
+        from fix_cache import fix_cache
+        data = fix_cache(data)
+        
         # Sonuçları kaydet
         data.sort_index(axis=1, inplace=True)
         data.to_pickle(DATA_CACHE_FILE)
     
-    return data
+    return get_clean_data(data)
 
 def get_clean_data(data):
     """

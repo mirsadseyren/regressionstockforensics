@@ -200,6 +200,8 @@ def main():
     # Beklenti sapması (Actual - Expected)
     results_df['Deviation'] = results_df['Actual P/L (%)'] - results_df['Expected P/L (%)']
     avg_deviation = results_df['Deviation'].mean()
+    min_deviation = results_df['Deviation'].min()
+    max_deviation = results_df['Deviation'].max()
 
     print("\n" + "="*50)
     print(f"📈 TEST TRADES İSTATİSTİKLERİ ({args.hold_days} İşlem Günlük Elde Tutma)")
@@ -210,6 +212,8 @@ def main():
     print(f"Ortalama Gerçekleşen Getiri(Act): %{avg_act_pl:.2f}")
     print(f"Beklentiyi Karşılama Oranı      : %{met_exp_rate:.2f} (Gerçekleşen >= Beklenen)")
     print(f"Ortalama Sapma (Act - Exp)      : %{avg_deviation:.2f}")
+    print(f"Minimum Sapma (Act - Exp)       : %{min_deviation:.2f}")
+    print(f"Maksimum Sapma (Act - Exp)      : %{max_deviation:.2f}")
     print("="*50)
     
     print("\nEn İyi Performans Gösteren 5 İşlem:")

@@ -82,8 +82,9 @@ def main():
 
     # 3. Simülasyon
     current_cash = START_CAPITAL
-    active_portfolio = [] # İçeriği: {'t': ticker, 'l': lots, 'b': buy_price, 'max_p': max_price, 'buy_dt': date, 'days_held': int}
+    active_portfolio = [] # İçeriği: {'t': ticker, 'l': lots, 'b': buy_price, 'max_p': max_price, 'buy_dt': date, 'days_held': int, 'exp_pl': float}
     trade_history = []
+    deviations = []
     daily_vals = pd.Series(index=trading_days, dtype=float)
 
     total_days = len(trading_days)
@@ -121,6 +122,8 @@ def main():
                 revenue = item['l'] * current_price * (1 - COMMISSION_RATE)
                 current_cash += revenue
                 pl_pct = (current_price / item['b'] - 1) * 100
+                deviation = pl_pct - item.get('exp_pl', 0)
+                deviations.append(deviation)
                 
                 trade_history.append([
                     dt.strftime('%Y-%m-%d'),
@@ -129,7 +132,7 @@ def main():
                     f"{current_price:.2f}",
                     reason,
                     f"{current_cash:,.2f}",
-                    f"P/L: %{pl_pct:.2f} | Peak: {item['max_p']:.2f}"
+                    f"P/L: %{pl_pct:.2f} | Dev: %{deviation:.2f} | Peak: {item['max_p']:.2f}"
                 ])
                 
                 active_portfolio.remove(item)
@@ -207,7 +210,8 @@ def main():
                                     'b': buy_price,
                                     'max_p': buy_price,
                                     'buy_dt': dt,
-                                    'days_held': 0
+                                    'days_held': 0,
+                                    'exp_pl': row['exp_pl']
                                 })
                                 
                                 trade_history.append([
@@ -236,6 +240,11 @@ def main():
     
     print(f"\n🎯 Sonuç: {START_CAPITAL:,.0f} TL -> {final_balance:,.2f} TL")
     print(f"Toplam Getiri: %{roi:.2f}")
+    
+    if deviations:
+        print(f"Ortalama Sapma (Deviation): %{np.mean(deviations):.2f}")
+        print(f"Minimum Sapma (Deviation): %{np.min(deviations):.2f}")
+        print(f"Maksimum Sapma (Deviation): %{np.max(deviations):.2f}")
 
     # 5. EXCEL ÇIKTISI
     columns = ["Tarih", "Hisse", "Lot", "Fiyat", "İşlem", "Nakit", "Bilgi"]
@@ -293,6 +302,10 @@ def main():
     plt.legend()
     plt.grid(True, alpha=0.15)
     plt.tight_layout()
+    
+    chart_file = "portfolio_backtest_chart.png"
+    plt.savefig(chart_file, dpi=150, bbox_inches='tight', facecolor=fig.get_facecolor())
+    print(f"Portföy grafiği '{chart_file}' dosyasına kaydedildi.")
     plt.show()
 
 if __name__ == "__main__":
