@@ -559,8 +559,14 @@ with tab5:
         if not os.path.exists(matrix_file):
             st.warning("⚠️ historical_trade_metrics.csv bulunamadı! Lütfen yandaki butona tıklayarak matrisi oluşturun.")
         else:
-            # Tarih Seçimi
-            ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş bir tarih seçerek modelin başarısını test edebilirsiniz)", value=last_available_date.date(), key="ai_target_date")
+            # Tarih ve Filtre Seçimi
+            c1, c2 = st.columns(2)
+            with c1:
+                ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş test için)", value=last_available_date.date(), key="ai_target_date")
+                sort_metric = st.selectbox("Sıralama Metriği", ["ML Güven Skoru (Orijinal)", "Kompozit Güven (Finansal x ML)"])
+            with c2:
+                st_min_conf = st.number_input("Min ML Güven Skoru", value=2.5, step=0.5, help="Sadece bu skorun üzerindekileri listele")
+                st_min_fin = st.number_input("Min Finansal Skor", value=0.01, step=0.5, help="Sadece bu skorun üzerindekileri listele")
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
@@ -601,7 +607,7 @@ with tab5:
                             actual_pl_dict = {}
                             is_past_date = (idx != len(precalc['prices']) - 1)
                             if is_past_date:
-                                future_idx = idx + 7
+                                future_idx = idx + 15
                                 if future_idx < len(precalc['prices']):
                                     future_prices = precalc['prices'].iloc[future_idx]
                                     actual_pl_dict = ((future_prices - prices) / prices * 100).to_dict()
@@ -645,15 +651,22 @@ with tab5:
                                 today_df['finansal_skor'] = fin_scores
                                 today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
                                 
-                                best_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
+                                best_candidates = today_df[
+                                    (today_df['exp_pl'] > 0) & 
+                                    (today_df['win_rate'] >= 50) &
+                                    (today_df['confidence_score'] >= st_min_conf) &
+                                    (today_df['finansal_skor'] >= st_min_fin)
+                                ]
+                                
+                                sort_col = 'confidence_score' if 'Orijinal' in sort_metric else 'fin_x_kume_guveni'
                                 
                                 if best_candidates.empty:
-                                    st.warning("⚠️ Yapay zeka modeli bu tarih için güvenilir bir işlem bulamadı. Nakitte kalınması tavsiye edilebilir.")
-                                    best_candidates = today_df.sort_values(by='fin_x_kume_guveni', ascending=False).head(5)
-                                    st.info("İşte en az riskli görünen 5 aday:")
+                                    st.warning("⚠️ Belirttiğiniz filtrelere (Min Conf / Min Fin) uygun hisse bulunamadı! Nakitte kalınabilir.")
+                                    best_candidates = today_df.sort_values(by=sort_col, ascending=False).head(5)
+                                    st.info("Filtreleri göz ardı edersek en güçlü 5 aday:")
                                 else:
-                                    best_candidates = best_candidates.sort_values(by='fin_x_kume_guveni', ascending=False).head(15)
-                                    st.success(f"✅ En güvenilir {len(best_candidates)} hisse bulundu! (Tarih: {dt.strftime('%Y-%m-%d')})")
+                                    best_candidates = best_candidates.sort_values(by=sort_col, ascending=False).head(15)
+                                    st.success(f"✅ Filtrelere uygun {len(best_candidates)} hisse bulundu! (Tarih: {dt.strftime('%Y-%m-%d')})")
                                 
                                 # Sonuçları Tablo Olarak Göster
                                 results = []
@@ -672,12 +685,12 @@ with tab5:
                                     }
                                     if is_past_date and actual_pl_dict:
                                         actual = actual_pl_dict.get(ticker, np.nan)
-                                        res["Gerçekleşen 7G Kâr (%)"] = round(actual, 2) if not pd.isna(actual) else "N/A"
+                                        res["Gerçekleşen 15G Kâr (%)"] = round(actual, 2) if not pd.isna(actual) else "N/A"
                                     results.append(res)
                                     
                                 df_res = pd.DataFrame(results)
                                 
-                                # Gerçekleşen 7G Kâr sütunu için mutlak yeşil/kırmızı renklendirme
+                                # Gerçekleşen 15G Kâr sütunu için mutlak yeşil/kırmızı renklendirme
                                 def color_actual_pl(val):
                                     """Kâr yeşil, zarar kırmızı - büyüklüğe göre yoğunluk artar."""
                                     if val == "N/A" or pd.isna(val):
@@ -704,8 +717,8 @@ with tab5:
                                 
                                 # Stilize tablo
                                 styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'Kompozit Güven'], cmap='Greens')
-                                if is_past_date and actual_pl_dict and 'Gerçekleşen 7G Kâr (%)' in df_res.columns:
-                                    styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 7G Kâr (%)'])
+                                if is_past_date and actual_pl_dict and 'Gerçekleşen 15G Kâr (%)' in df_res.columns:
+                                    styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 15G Kâr (%)'])
                                     
                                 st.dataframe(styled_df, use_container_width=True)
                                 
