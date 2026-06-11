@@ -563,7 +563,7 @@ with tab5:
             c1, c2, c3 = st.columns(3)
             with c1:
                 ai_target_date = st.date_input("Tahmin Tarihi Seçin", value=last_available_date.date(), key="ai_target_date")
-                sort_metric = st.selectbox("Sıralama Metriği", ["ML Güven Skoru (Orijinal)", "Kompozit Güven (Finansal x ML)"])
+                sort_metric = st.selectbox("Sıralama Metriği", ["Kompozit Güven (Finansal x ML)", "ML Güven Skoru (Orijinal)"])
             with c2:
                 st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
                 st_max_conf = st.number_input("Max ML Skoru", value=43.2, step=0.5)
