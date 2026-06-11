@@ -80,8 +80,8 @@ def main():
     parser.add_argument('-d', '--hold-days', type=int, default=10, help="Maksimum elde tutma gün sayısı (default: 16)")
     parser.add_argument('--min-conf', type=float, default=4.1, help="Minimum ML Confidence Score")
     parser.add_argument('--max-conf', type=float, default=10.1, help="Maksimum ML Confidence Score")
-    parser.add_argument('--min-fin', type=float, default=-6.0, help="Minimum Finansal Güven Skoru")
-    parser.add_argument('--max-fin', type=float, default=93.6, help="Maksimum Finansal Güven Skoru")
+    parser.add_argument('--min-fin', type=float, default=0.0, help="Minimum Finansal Güven Skoru (Percentile 0-100)")
+    parser.add_argument('--max-fin', type=float, default=100.0, help="Maksimum Finansal Güven Skoru (Percentile 0-100)")
     
     args = parser.parse_args()
     
@@ -243,13 +243,13 @@ def main():
                     
                 today_df['exp_pl'] = expected_pl
                 today_df['win_rate'] = win_rates
-                today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
+                today_df['confidence_score'] = today_df['exp_pl']
                 
-                # === FİNANSAL GÜVEN SKORU ENTEGRASYONU ===
+                # === FİNANSAL GÜVEN SKORU ENTEGRASYONU (Percentile Normalization) ===
                 fin_scores = [financial_scores_dict.get(t, 0.0) for t in today_df.index]
-                today_df['finansal_skor'] = fin_scores
-                # Yeni sıralama kriteri
-                today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
+                today_df['fin_skor_raw'] = fin_scores
+                # BIST içindeki göreceli konumunu 0-100 arasına (yüzdelik dilim) oturt
+                today_df['finansal_skor'] = today_df['fin_skor_raw'].rank(pct=True) * 100
                 
                 best_candidates = today_df[
                     (today_df['exp_pl'] > 0) & 
@@ -260,8 +260,8 @@ def main():
                     (today_df['finansal_skor'] <= MAX_FIN)
                 ]
                 
-                # Yeni "Finansal x Küme Güveni" skoru ile azalan sıralama
-                best_candidates = best_candidates.sort_values(by='fin_x_kume_guveni', ascending=False)
+                # Sadece ML Güven Skoru (Expected P/L) ile azalan sıralama
+                best_candidates = best_candidates.sort_values(by='confidence_score', ascending=False)
                 
                 top_picks = best_candidates.head(empty_slots)
                 
@@ -298,7 +298,7 @@ def main():
                                     f"{buy_price:.2f}",
                                     "ALIS",
                                     f"{current_cash:,.2f}",
-                                    f"FinxKüme: {row['fin_x_kume_guveni']:.2f} | ExpPL: %{row['exp_pl']:.2f}"
+                                    f"Finansal: {row['finansal_skor']:.0f}/100 | ExpPL: %{row['exp_pl']:.2f}"
                                 ])
 
         # C. GÜNLÜK DEĞERLEME

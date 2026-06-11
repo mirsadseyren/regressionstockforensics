@@ -563,13 +563,12 @@ with tab5:
             c1, c2, c3 = st.columns(3)
             with c1:
                 ai_target_date = st.date_input("Tahmin Tarihi Seçin", value=last_available_date.date(), key="ai_target_date")
-                sort_metric = st.selectbox("Sıralama Metriği", ["Kompozit Güven (Finansal x ML)", "ML Güven Skoru (Orijinal)"])
             with c2:
                 st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
-                st_max_conf = st.number_input("Max ML Skoru", value=10.1, step=0.5)
+                st_max_conf = st.number_input("Max ML Skoru", value=20.1, step=0.5)
             with c3:
-                st_min_fin = st.number_input("Min Finansal Skor", value=-6.0, step=0.5)
-                st_max_fin = st.number_input("Max Finansal Skor", value=93.6, step=0.5)
+                st_min_fin = st.number_input("Min Finansal Uyum (0-100)", value=0.0, step=5.0)
+                st_max_fin = st.number_input("Max Finansal Uyum (0-100)", value=100.0, step=5.0)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
@@ -646,13 +645,13 @@ with tab5:
                                     
                                 today_df['exp_pl'] = expected_pl
                                 today_df['win_rate'] = win_rates
-                                today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
+                                today_df['confidence_score'] = today_df['exp_pl']
                                 
-                                # --- FİNANSAL SKOR ENTEGRASYONU ---
+                                # --- FİNANSAL SKOR ENTEGRASYONU (Percentile Normalization) ---
                                 fin_dict = get_financial_scores(closes.columns.tolist())
                                 fin_scores = [fin_dict.get(t, 0.0) for t in today_df.index]
-                                today_df['finansal_skor'] = fin_scores
-                                today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
+                                today_df['fin_skor_raw'] = fin_scores
+                                today_df['finansal_skor'] = today_df['fin_skor_raw'].rank(pct=True) * 100
                                 
                                 # Tavsiye Durumu Hesaplama
                                 today_df['Tavsiye'] = (
@@ -663,7 +662,7 @@ with tab5:
                                 )
                                 
                                 base_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
-                                sort_col = 'confidence_score' if 'Orijinal' in sort_metric else 'fin_x_kume_guveni'
+                                sort_col = 'confidence_score'
                                 
                                 if base_candidates.empty:
                                     st.warning("⚠️ Algoritma hiçbir pozitif beklentili hisse bulamadı.")
@@ -692,8 +691,7 @@ with tab5:
                                         "Kazanma İhtimali (%)": round(row['win_rate'], 1),
                                         "Beklenen 7G Kâr (%)": round(row['exp_pl'], 2),
                                         "ML Güven Skoru": round(row['confidence_score'], 3),
-                                        "Finansal Skor": round(row['finansal_skor'], 3),
-                                        "Kompozit Güven": round(row['fin_x_kume_guveni'], 3),
+                                        "Finansal Uyum (0-100)": round(row['finansal_skor'], 1),
                                         "Eğim": round(row['slope'], 4),
                                         "R²": round(row['r2'], 2)
                                     }
@@ -734,7 +732,7 @@ with tab5:
                                             return 'color: gray; font-style: italic'
                                     
                                     # Stilize tablo
-                                    styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'Kompozit Güven'], cmap='Greens')
+                                    styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'ML Güven Skoru'], cmap='Greens')
                                     styled_df = styled_df.map(color_tavsiye, subset=['Öneri'])
                                     if is_past_date and actual_pl_dict and 'Gerçekleşen 15G Kâr (%)' in df_res.columns:
                                         styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 15G Kâr (%)'])

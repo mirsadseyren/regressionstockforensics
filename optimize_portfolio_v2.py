@@ -283,16 +283,16 @@ def main():
             
             today_df['exp_pl'] = expected_pl
             today_df['win_rate'] = win_rates
-            today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
+            today_df['confidence_score'] = today_df['exp_pl']
             
-            # --- FİNANSAL SKOR ENTEGRASYONU ---
+            # --- FİNANSAL SKOR ENTEGRASYONU (Percentile Normalization) ---
             fin_scores = [financial_scores_dict.get(t, 0.0) for t in today_df.index]
-            today_df['finansal_skor'] = fin_scores
-            today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
+            today_df['fin_skor_raw'] = fin_scores
+            today_df['finansal_skor'] = today_df['fin_skor_raw'].rank(pct=True) * 100
             
             best_cands = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
-            # Yeni sıralama kriteri ile (Finansal x Küme) sırala
-            best_cands = best_cands.sort_values(by='fin_x_kume_guveni', ascending=False)
+            # Sadece ML (Expected P/L) skoru ile sırala
+            best_cands = best_cands.sort_values(by='confidence_score', ascending=False)
             
             # Dictionary formatında sakla
             cands_list = []
@@ -315,8 +315,8 @@ def main():
         'hold_days': (3, 21),
         'min_conf': (0.0, 20.0),
         'max_conf': (10.0, 100.0),
-        'min_fin': (-10.0, 15.0),
-        'max_fin': (10.0, 100.0)
+        'min_fin': (0.0, 100.0),
+        'max_fin': (0.0, 100.0)
     }
     
     def generate_random_individual():
