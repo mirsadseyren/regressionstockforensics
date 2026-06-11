@@ -36,10 +36,28 @@ def run_simulation_portfolio(params):
     try:
         max_hold_delta = pd.Timedelta(days=hold_days)
         current_cash = START_CAPITAL
-        active_portfolio = [] # {'t': ticker, 'l': lots, 'b': buy_price, 'max_p': peak_price, 'buy_dt': date, 'days_held': int}
+        active_portfolio = [] # {'t': ticker, 'l': lots, 'b': buy_price, 'max_p': peak_price, 'buy_dt': date}
+        
+        peak_portfolio_val = START_CAPITAL
+        max_dd = 0.0
         
         for dt in worker_trading_days:
-            # A. Mevcut Portföy Kontrolü (Satışlar)
+            # 1. Portföy Değerini Hesapla ve Max DD'yi Güncelle
+            daily_val = current_cash
+            for item in active_portfolio:
+                cp = worker_raw_data.at[dt, item['t']]
+                if pd.isna(cp) or cp <= 0:
+                    cp = item['b']
+                daily_val += item['l'] * cp
+                
+            if daily_val > peak_portfolio_val:
+                peak_portfolio_val = daily_val
+                
+            dd = (peak_portfolio_val - daily_val) / peak_portfolio_val
+            if dd > max_dd:
+                max_dd = dd
+
+            # 2. Mevcut Portföy Kontrolü (Satışlar)
             for item in active_portfolio[:]:
                 current_price = worker_raw_data.at[dt, item['t']]
                 if pd.isna(current_price) or current_price <= 0:
@@ -62,8 +80,6 @@ def run_simulation_portfolio(params):
                     revenue = item['l'] * current_price * (1 - COMMISSION_RATE)
                     current_cash += revenue
                     active_portfolio.remove(item)
-                else:
-                    item['days_held'] += 1
 
             # B. Yeni Alımlar
             empty_slots = num_stocks - len(active_portfolio)
@@ -106,8 +122,7 @@ def run_simulation_portfolio(params):
                                         'l': lots,
                                         'b': buy_price,
                                         'max_p': buy_price,
-                                        'buy_dt': dt,
-                                        'days_held': 0
+                                        'buy_dt': dt
                                     })
                                     
         # Simülasyon bitti, son günü değerle
@@ -129,7 +144,8 @@ def run_simulation_portfolio(params):
             'min_fin': min_fin,
             'max_fin': max_fin,
             'final_balance': final_val,
-            'roi': roi
+            'roi': roi,
+            'max_dd': max_dd
         }
     except Exception as e:
         return {'error': str(e), 'params': params}
@@ -236,8 +252,7 @@ def main():
     print("Her gün için KNN tahminleri önceden hesaplanıyor (Bu işlem grid search'ü uçuracak)...")
     daily_candidates = {}
     
-    max_candidates_needed = 10 # N=10'a kadar test edeceğiz, ilk 10 yeterli
-    
+    # Max threshold limitini kaldırıyoruz, tüm listeyi precompute etmeli ki backtest_v2 ile aynı çalışsın.
     for dt in tqdm(trading_days, desc="Precomputing Daily Predictions"):
         idx = precalc['prices'].index.get_indexer([dt], method='pad')[0]
         if idx < 0:
@@ -277,7 +292,7 @@ def main():
             
             best_cands = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
             # Yeni sıralama kriteri ile (Finansal x Küme) sırala
-            best_cands = best_cands.sort_values(by='fin_x_kume_guveni', ascending=False).head(max_candidates_needed)
+            best_cands = best_cands.sort_values(by='fin_x_kume_guveni', ascending=False)
             
             # Dictionary formatında sakla
             cands_list = []
@@ -331,8 +346,8 @@ def main():
         pt = random.randint(1, 5)
         return ind1[:pt] + ind2[pt:]
 
-    POPULATION_SIZE = 100
-    GENERATIONS = 15
+    POPULATION_SIZE = 1000
+    GENERATIONS = 200
     
     print(f"\n🧬 Genetik Algoritma (Heuristic Search) Başlatılıyor...")
     print(f"Popülasyon: {POPULATION_SIZE}, Jenerasyon: {GENERATIONS} (Toplam Test: {POPULATION_SIZE * GENERATIONS})")
@@ -350,15 +365,21 @@ def main():
             results = list(pool.imap_unordered(run_simulation_portfolio, population))
             valid_results = [r for r in results if 'error' not in r]
             
-            valid_results.sort(key=lambda x: x['roi'], reverse=True)
+            def get_fitness(res):
+                if res['roi'] <= 0:
+                    return res['roi']
+                return res['roi'] * (1 - res['max_dd'])
+                
+            valid_results.sort(key=get_fitness, reverse=True)
             
             for r in valid_results[:10]:
                 param_tuple = (r['num_stocks'], r['stop_loss'], r['hold_days'], r['min_conf'], r['max_conf'], r['min_fin'], r['max_fin'])
-                if param_tuple not in best_results_dict or best_results_dict[param_tuple]['roi'] < r['roi']:
+                if param_tuple not in best_results_dict or get_fitness(best_results_dict[param_tuple]) < get_fitness(r):
                     best_results_dict[param_tuple] = r
             
             best = valid_results[0]
-            print(f"Gen {gen+1:02d}/{GENERATIONS} | En İyi ROI: %{best['roi']:<8.2f} | N: {best['num_stocks']}, SL: %{best['stop_loss']*100:.1f}, Hold: {best['hold_days']}, Conf: [{best['min_conf']:.1f}, {best['max_conf']:.1f}], Fin: [{best['min_fin']:.1f}, {best['max_fin']:.1f}]")
+            best_fitness = get_fitness(best)
+            print(f"Gen {gen+1:02d}/{GENERATIONS} | Skor: {best_fitness:<6.0f} | ROI: %{best['roi']:<8.2f} | MaxDD: %{best['max_dd']*100:<5.1f} | N: {best['num_stocks']}, SL: %{best['stop_loss']*100:.1f}, Hold: {best['hold_days']}, Conf: [{best['min_conf']:.1f}, {best['max_conf']:.1f}], Fin: [{best['min_fin']:.1f}, {best['max_fin']:.1f}]")
             
             # Elitizm: En iyi 20'yi doğrudan bir sonraki nesle aktar
             next_gen = [(r['num_stocks'], r['stop_loss'], r['hold_days'], r['min_conf'], r['max_conf'], r['min_fin'], r['max_fin']) for r in valid_results[:20]]
@@ -385,14 +406,16 @@ def main():
     
     # 6. Sonuçları Raporla
     all_best_results = list(best_results_dict.values())
-    all_best_results.sort(key=lambda x: x['roi'], reverse=True)
+    # En iyi skorlar (ROI ve Max DD birleşik fitness)
+    all_best_results.sort(key=lambda x: x['roi'] * (1 - x['max_dd']), reverse=True)
     
-    print("\n" + "="*120)
-    print(f"{'RANK':<5} | {'ROI (%)':<10} | {'FINAL BAL':<15} | {'N_STOCKS':<8} | {'STOP_LOSS':<9} | {'HOLD_DAYS':<9} | {'MIN_CONF':<8} | {'MAX_CONF':<8} | {'MIN_FIN':<8} | {'MAX_FIN':<8}")
-    print("-" * 120)
+    print("\n" + "="*135)
+    print(f"{'RANK':<5} | {'SCORE':<8} | {'ROI (%)':<10} | {'MAX DD':<8} | {'FINAL BAL':<15} | {'N_STOCKS':<8} | {'STOP_LOSS':<9} | {'HOLD_DAYS':<9} | {'MIN_CONF':<8} | {'MAX_CONF':<8} | {'MIN_FIN':<8} | {'MAX_FIN':<8}")
+    print("-" * 135)
     
     for i, res in enumerate(all_best_results[:20]):
-        print(f"{i+1:<5} | %{res['roi']:<9.2f} | {res['final_balance']:<15,.2f} | {res['num_stocks']:<8} | {res['stop_loss']:<9.2f} | {res['hold_days']:<9} | {res['min_conf']:<8.1f} | {res['max_conf']:<8.1f} | {res['min_fin']:<8.1f} | {res['max_fin']:<8.1f}")
+        score = res['roi'] * (1 - res['max_dd'])
+        print(f"{i+1:<5} | {score:<8.0f} | %{res['roi']:<9.2f} | %{res['max_dd']*100:<7.2f} | {res['final_balance']:<15,.2f} | {res['num_stocks']:<8} | {res['stop_loss']:<9.2f} | {res['hold_days']:<9} | {res['min_conf']:<8.1f} | {res['max_conf']:<8.1f} | {res['min_fin']:<8.1f} | {res['max_fin']:<8.1f}")
 
     print("="*120)
     
