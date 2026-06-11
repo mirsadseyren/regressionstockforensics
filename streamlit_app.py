@@ -564,11 +564,11 @@ with tab5:
             with c1:
                 ai_target_date = st.date_input("Tahmin Tarihi Seçin", value=last_available_date.date(), key="ai_target_date")
             with c2:
-                st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
-                st_max_conf = st.number_input("Max ML Skoru", value=20.1, step=0.5)
+                st_min_conf = st.number_input("Min ML Skoru", value=1.5, step=0.5)
+                st_max_conf = st.number_input("Max ML Skoru", value=21.2, step=0.5)
             with c3:
-                st_min_fin = st.number_input("Min Finansal Uyum (0-100)", value=0.0, step=5.0)
-                st_max_fin = st.number_input("Max Finansal Uyum (0-100)", value=100.0, step=5.0)
+                st_min_fin = st.number_input("Min Finansal Uyum (0-100)", value=0.2, step=5.0)
+                st_max_fin = st.number_input("Max Finansal Uyum (0-100)", value=60.2, step=5.0)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
