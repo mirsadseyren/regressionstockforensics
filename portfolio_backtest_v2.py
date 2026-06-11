@@ -75,12 +75,12 @@ def fetch_and_calculate_financial_score(tickers):
 
 def main():
     parser = argparse.ArgumentParser(description="Portfolio Backtest v2 using Finansal x Küme Güveni")
-    parser.add_argument('-n', '--num-stocks', type=int, default=1, help="Maksimum tutulacak hisse sayısı (default: 2)")
-    parser.add_argument('-s', '--stop-loss', type=float, default=0.09, help="Zarar kesme (Trailing Stop) yüzdesi (default: 0.05 = %%5)")
-    parser.add_argument('-d', '--hold-days', type=int, default=16, help="Maksimum elde tutma gün sayısı (default: 10)")
+    parser.add_argument('-n', '--num-stocks', type=int, default=1, help="Maksimum tutulacak hisse sayısı (default: 1)")
+    parser.add_argument('-s', '--stop-loss', type=float, default=0.09, help="Zarar kesme (Trailing Stop) yüzdesi (default: 0.09 = %%9)")
+    parser.add_argument('-d', '--hold-days', type=int, default=16, help="Maksimum elde tutma gün sayısı (default: 16)")
     parser.add_argument('--min-conf', type=float, default=4.1, help="Minimum ML Confidence Score")
     parser.add_argument('--max-conf', type=float, default=43.2, help="Maksimum ML Confidence Score")
-    parser.add_argument('--min-fin', type=float, default=0, help="Minimum Finansal Güven Skoru")
+    parser.add_argument('--min-fin', type=float, default=-7.6, help="Minimum Finansal Güven Skoru")
     parser.add_argument('--max-fin', type=float, default=93.4, help="Maksimum Finansal Güven Skoru")
     
     args = parser.parse_args()
