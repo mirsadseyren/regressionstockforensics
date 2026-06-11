@@ -640,7 +640,7 @@ with tab5:
                                 today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
                                 
                                 # --- FİNANSAL SKOR ENTEGRASYONU ---
-                                fin_dict = get_financial_scores(all_data.columns.tolist())
+                                fin_dict = get_financial_scores(closes.columns.tolist())
                                 fin_scores = [fin_dict.get(t, 0.0) for t in today_df.index]
                                 today_df['finansal_skor'] = fin_scores
                                 today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
