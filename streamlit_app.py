@@ -568,7 +568,7 @@ with tab5:
                 st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
                 st_max_conf = st.number_input("Max ML Skoru", value=10.1, step=0.5)
             with c3:
-                st_min_fin = st.number_input("Min Finansal Skor", value=-6.4, step=0.5)
+                st_min_fin = st.number_input("Min Finansal Skor", value=-6.0, step=0.5)
                 st_max_fin = st.number_input("Max Finansal Skor", value=93.6, step=0.5)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
