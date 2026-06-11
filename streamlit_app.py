@@ -71,6 +71,61 @@ def get_data(force=False):
     data = load_data(tickers, force_refresh=force)
     return data
 
+@st.cache_data(ttl=3600*12, show_spinner="Yfinance finansal verileri çekiliyor (İlk sefere mahsus 1-2 dk sürebilir)...")
+def get_financial_scores(tickers):
+    import yfinance as yf
+    import time
+    financial_data = []
+    valid_tickers = [t for t in tickers if isinstance(t, str) and t.endswith('.IS')]
+    
+    for ticker in valid_tickers:
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            data = {
+                'Ticker': ticker,
+                'PD/DD (Price to Book)': info.get('priceToBook', np.nan),
+                'FD/FAVÖK (EV/EBITDA)': info.get('enterpriseToEbitda', np.nan),
+                'F/K (Trailing PE)': info.get('trailingPE', np.nan),
+                'FAVÖK Marjı (EBITDA Margin)': info.get('ebitdaMargins', np.nan),
+                'ROE': info.get('returnOnEquity', np.nan),
+                'ROA': info.get('returnOnAssets', np.nan),
+                'Ortalama Hacim (Avg Volume)': info.get('averageVolume', np.nan)
+            }
+            financial_data.append(data)
+            time.sleep(0.01)
+        except Exception:
+            pass
+            
+    if not financial_data:
+        return {}
+        
+    df = pd.DataFrame(financial_data).set_index('Ticker')
+    metrics = df.columns.tolist()
+    
+    for col in metrics:
+        df[col] = df[col].replace([np.inf, -np.inf], np.nan)
+        mean_val = df[col].mean()
+        std_val = df[col].std()
+        if std_val != 0 and not pd.isna(std_val):
+            df[col] = (df[col] - mean_val) / std_val
+            
+    weights = {
+        'PD/DD (Price to Book)': 0.86,
+        'FD/FAVÖK (EV/EBITDA)': -14.83,
+        'F/K (Trailing PE)': 0.63,
+        'FAVÖK Marjı (EBITDA Margin)': 1.50,
+        'ROE': -3.85,
+        'ROA': -2.26,
+        'Ortalama Hacim (Avg Volume)': 18.93
+    }
+    
+    df['Finansal Güven Skoru'] = 0.0
+    for metric in metrics:
+        df['Finansal Güven Skoru'] += df[metric].fillna(0) * weights.get(metric, 0.0)
+        
+    return df['Finansal Güven Skoru'].to_dict()
+
 # Yan menüye yenileme butonu
 if st.sidebar.button("🔄 Verileri Güncelle"):
     st.session_state.force_refresh = True
@@ -584,14 +639,20 @@ with tab5:
                                 today_df['win_rate'] = win_rates
                                 today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
                                 
+                                # --- FİNANSAL SKOR ENTEGRASYONU ---
+                                fin_dict = get_financial_scores(all_data.columns.tolist())
+                                fin_scores = [fin_dict.get(t, 0.0) for t in today_df.index]
+                                today_df['finansal_skor'] = fin_scores
+                                today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
+                                
                                 best_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
                                 
                                 if best_candidates.empty:
                                     st.warning("⚠️ Yapay zeka modeli bu tarih için güvenilir bir işlem bulamadı. Nakitte kalınması tavsiye edilebilir.")
-                                    best_candidates = today_df.sort_values(by='confidence_score', ascending=False).head(5)
+                                    best_candidates = today_df.sort_values(by='fin_x_kume_guveni', ascending=False).head(5)
                                     st.info("İşte en az riskli görünen 5 aday:")
                                 else:
-                                    best_candidates = best_candidates.sort_values(by='confidence_score', ascending=False).head(15)
+                                    best_candidates = best_candidates.sort_values(by='fin_x_kume_guveni', ascending=False).head(15)
                                     st.success(f"✅ En güvenilir {len(best_candidates)} hisse bulundu! (Tarih: {dt.strftime('%Y-%m-%d')})")
                                 
                                 # Sonuçları Tablo Olarak Göster
@@ -603,10 +664,11 @@ with tab5:
                                         "Fiyat": round(row['price'], 2),
                                         "Kazanma İhtimali (%)": round(row['win_rate'], 1),
                                         "Beklenen 7G Kâr (%)": round(row['exp_pl'], 2),
-                                        "Güven Skoru": round(row['confidence_score'], 3),
+                                        "ML Güven Skoru": round(row['confidence_score'], 3),
+                                        "Finansal Skor": round(row['finansal_skor'], 3),
+                                        "Kompozit Güven": round(row['fin_x_kume_guveni'], 3),
                                         "Eğim": round(row['slope'], 4),
-                                        "R²": round(row['r2'], 2),
-                                        "Score": round(row['score'], 4)
+                                        "R²": round(row['r2'], 2)
                                     }
                                     if is_past_date and actual_pl_dict:
                                         actual = actual_pl_dict.get(ticker, np.nan)
@@ -641,7 +703,7 @@ with tab5:
                                     return f'background-color: rgb({r},{g},{b}); color: {text_color}; font-weight: bold'
                                 
                                 # Stilize tablo
-                                styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)'], cmap='Greens')
+                                styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'Kompozit Güven'], cmap='Greens')
                                 if is_past_date and actual_pl_dict and 'Gerçekleşen 7G Kâr (%)' in df_res.columns:
                                     styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 7G Kâr (%)'])
                                     
