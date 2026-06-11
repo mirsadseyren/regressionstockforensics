@@ -560,13 +560,16 @@ with tab5:
             st.warning("⚠️ historical_trade_metrics.csv bulunamadı! Lütfen yandaki butona tıklayarak matrisi oluşturun.")
         else:
             # Tarih ve Filtre Seçimi
-            c1, c2 = st.columns(2)
+            c1, c2, c3 = st.columns(3)
             with c1:
-                ai_target_date = st.date_input("Tahmin Tarihi Seçin (Geçmiş test için)", value=last_available_date.date(), key="ai_target_date")
+                ai_target_date = st.date_input("Tahmin Tarihi Seçin", value=last_available_date.date(), key="ai_target_date")
                 sort_metric = st.selectbox("Sıralama Metriği", ["ML Güven Skoru (Orijinal)", "Kompozit Güven (Finansal x ML)"])
             with c2:
-                st_min_conf = st.number_input("Min ML Güven Skoru", value=2.5, step=0.5, help="Sadece bu skorun üzerindekileri listele")
-                st_min_fin = st.number_input("Min Finansal Skor", value=0.01, step=0.5, help="Sadece bu skorun üzerindekileri listele")
+                st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
+                st_max_conf = st.number_input("Max ML Skoru", value=43.2, step=0.5)
+            with c3:
+                st_min_fin = st.number_input("Min Finansal Skor", value=-7.6, step=0.5)
+                st_max_fin = st.number_input("Max Finansal Skor", value=93.4, step=0.5)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
@@ -651,28 +654,39 @@ with tab5:
                                 today_df['finansal_skor'] = fin_scores
                                 today_df['fin_x_kume_guveni'] = today_df['finansal_skor'] * today_df['confidence_score']
                                 
-                                best_candidates = today_df[
-                                    (today_df['exp_pl'] > 0) & 
-                                    (today_df['win_rate'] >= 50) &
+                                # Tavsiye Durumu Hesaplama
+                                today_df['Tavsiye'] = (
                                     (today_df['confidence_score'] >= st_min_conf) &
-                                    (today_df['finansal_skor'] >= st_min_fin)
-                                ]
+                                    (today_df['confidence_score'] <= st_max_conf) &
+                                    (today_df['finansal_skor'] >= st_min_fin) &
+                                    (today_df['finansal_skor'] <= st_max_fin)
+                                )
                                 
+                                base_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
                                 sort_col = 'confidence_score' if 'Orijinal' in sort_metric else 'fin_x_kume_guveni'
                                 
-                                if best_candidates.empty:
-                                    st.warning("⚠️ Belirttiğiniz filtrelere (Min Conf / Min Fin) uygun hisse bulunamadı! Nakitte kalınabilir.")
-                                    best_candidates = today_df.sort_values(by=sort_col, ascending=False).head(5)
-                                    st.info("Filtreleri göz ardı edersek en güçlü 5 aday:")
+                                if base_candidates.empty:
+                                    st.warning("⚠️ Algoritma hiçbir pozitif beklentili hisse bulamadı.")
+                                    best_candidates = pd.DataFrame()
                                 else:
-                                    best_candidates = best_candidates.sort_values(by=sort_col, ascending=False).head(15)
-                                    st.success(f"✅ Filtrelere uygun {len(best_candidates)} hisse bulundu! (Tarih: {dt.strftime('%Y-%m-%d')})")
+                                    best_candidates = base_candidates.sort_values(by=sort_col, ascending=False).head(15)
+                                    recommended_count = best_candidates['Tavsiye'].sum()
+                                    st.success(f"✅ En güçlü 15 hisse listelendi. Bunlardan {recommended_count} tanesi filtrelerinize uygun! (Tarih: {dt.strftime('%Y-%m-%d')})")
                                 
                                 # Sonuçları Tablo Olarak Göster
                                 results = []
                                 for ticker, row in best_candidates.iterrows():
                                     t_name = ticker.replace('.IS', '')
+                                    is_recommended = row.get('Tavsiye', False)
+                                    
+                                    if is_recommended:
+                                        t_name = f"🚀 {t_name}"
+                                        tavsiye_durumu = "✅ UYGUN"
+                                    else:
+                                        tavsiye_durumu = "❌ FİLTRE DIŞI"
+                                        
                                     res = {
+                                        "Öneri": tavsiye_durumu,
                                         "Hisse": t_name,
                                         "Fiyat": round(row['price'], 2),
                                         "Kazanma İhtimali (%)": round(row['win_rate'], 1),
@@ -688,39 +702,44 @@ with tab5:
                                         res["Gerçekleşen 15G Kâr (%)"] = round(actual, 2) if not pd.isna(actual) else "N/A"
                                     results.append(res)
                                     
-                                df_res = pd.DataFrame(results)
-                                
-                                # Gerçekleşen 15G Kâr sütunu için mutlak yeşil/kırmızı renklendirme
-                                def color_actual_pl(val):
-                                    """Kâr yeşil, zarar kırmızı - büyüklüğe göre yoğunluk artar."""
-                                    if val == "N/A" or pd.isna(val):
-                                        return ''
-                                    try:
-                                        v = float(val)
-                                    except (ValueError, TypeError):
-                                        return ''
-                                    # Yoğunluğu belirle: max ±15% civarında tam doygunluk
-                                    intensity = min(abs(v) / 15.0, 1.0)
-                                    if v > 0:
-                                        # Yeşil: rgba(33, 195, 90) -> beyazdan yeşile
-                                        r = int(255 - (255 - 33) * intensity)
-                                        g = int(255 - (255 - 195) * intensity)
-                                        b = int(255 - (255 - 90) * intensity)
-                                        text_color = 'white' if intensity > 0.4 else '#1a1a2e'
-                                    else:
-                                        # Kırmızı: rgba(255, 75, 75) -> beyazdan kırmızıya
-                                        r = int(255 - (255 - 255) * intensity)
-                                        g = int(255 - (255 - 75) * intensity)
-                                        b = int(255 - (255 - 75) * intensity)
-                                        text_color = 'white' if intensity > 0.4 else '#1a1a2e'
-                                    return f'background-color: rgb({r},{g},{b}); color: {text_color}; font-weight: bold'
-                                
-                                # Stilize tablo
-                                styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'Kompozit Güven'], cmap='Greens')
-                                if is_past_date and actual_pl_dict and 'Gerçekleşen 15G Kâr (%)' in df_res.columns:
-                                    styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 15G Kâr (%)'])
+                                if results:
+                                    df_res = pd.DataFrame(results)
                                     
-                                st.dataframe(styled_df, use_container_width=True)
+                                    # Gerçekleşen 15G Kâr sütunu için mutlak yeşil/kırmızı renklendirme
+                                    def color_actual_pl(val):
+                                        if val == "N/A" or pd.isna(val):
+                                            return ''
+                                        try:
+                                            v = float(val)
+                                        except (ValueError, TypeError):
+                                            return ''
+                                        intensity = min(abs(v) / 15.0, 1.0)
+                                        if v > 0:
+                                            r = int(255 - (255 - 33) * intensity)
+                                            g = int(255 - (255 - 195) * intensity)
+                                            b = int(255 - (255 - 90) * intensity)
+                                            text_color = 'white' if intensity > 0.4 else '#1a1a2e'
+                                        else:
+                                            r = int(255 - (255 - 255) * intensity)
+                                            g = int(255 - (255 - 75) * intensity)
+                                            b = int(255 - (255 - 75) * intensity)
+                                            text_color = 'white' if intensity > 0.4 else '#1a1a2e'
+                                        return f'background-color: rgb({r},{g},{b}); color: {text_color}; font-weight: bold'
+                                    
+                                    # Öneri Sütununu Renklendir
+                                    def color_tavsiye(val):
+                                        if val == "✅ UYGUN":
+                                            return 'background-color: rgba(33, 195, 90, 0.4); font-weight: bold; color: white'
+                                        else:
+                                            return 'color: gray; font-style: italic'
+                                    
+                                    # Stilize tablo
+                                    styled_df = df_res.style.background_gradient(subset=['Kazanma İhtimali (%)', 'Beklenen 7G Kâr (%)', 'Kompozit Güven'], cmap='Greens')
+                                    styled_df = styled_df.map(color_tavsiye, subset=['Öneri'])
+                                    if is_past_date and actual_pl_dict and 'Gerçekleşen 15G Kâr (%)' in df_res.columns:
+                                        styled_df = styled_df.map(color_actual_pl, subset=['Gerçekleşen 15G Kâr (%)'])
+                                        
+                                    st.dataframe(styled_df, use_container_width=True)
                                 
                     except Exception as e:
                         st.error(f"Tahmin modeli çalıştırılırken bir hata oluştu: {str(e)}")
