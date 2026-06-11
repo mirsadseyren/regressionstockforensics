@@ -566,10 +566,10 @@ with tab5:
                 sort_metric = st.selectbox("Sıralama Metriği", ["Kompozit Güven (Finansal x ML)", "ML Güven Skoru (Orijinal)"])
             with c2:
                 st_min_conf = st.number_input("Min ML Skoru", value=4.1, step=0.5)
-                st_max_conf = st.number_input("Max ML Skoru", value=43.2, step=0.5)
+                st_max_conf = st.number_input("Max ML Skoru", value=10.1, step=0.5)
             with c3:
-                st_min_fin = st.number_input("Min Finansal Skor", value=-7.6, step=0.5)
-                st_max_fin = st.number_input("Max Finansal Skor", value=93.4, step=0.5)
+                st_min_fin = st.number_input("Min Finansal Skor", value=-6.4, step=0.5)
+                st_max_fin = st.number_input("Max Finansal Skor", value=93.6, step=0.5)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
