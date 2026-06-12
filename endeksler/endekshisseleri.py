@@ -159,11 +159,11 @@ def tickers_in_indices():
             # This xpath selects ALL stock names on the card view
             # Wait for elements to be visible first
             try:
-                WebDriverWait(driver, 100).until(EC.presence_of_all_elements_located((By.XPATH, "//span[contains(@class,'block overflow-hidden')]")))
+                WebDriverWait(driver, 100).until(EC.presence_of_all_elements_located((By.XPATH, "//span[@class='block']/following-sibling::span")))
             except:
                 print(f"Time out waiting for stocks for {index_name}")
 
-            stock_elements = driver.find_elements(By.XPATH, "//span[contains(@class,'block overflow-hidden')]")
+            stock_elements = driver.find_elements(By.XPATH, "//span[@class='block']/following-sibling::span")
             
             current_index_stocks = []
             for el in stock_elements:
@@ -258,5 +258,5 @@ def indices_performance():
 
 
 if __name__ == "__main__":
-    indices_performance()
+    # indices_performance()
     tickers_in_indices()

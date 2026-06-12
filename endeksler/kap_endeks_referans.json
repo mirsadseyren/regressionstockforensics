@@ -1,0 +1,294 @@
+[
+    {
+        "Endeks Adı": "BIST 100",
+        "Ticker": "XU100"
+    },
+    {
+        "Endeks Adı": "BIST 50",
+        "Ticker": "XU050"
+    },
+    {
+        "Endeks Adı": "BIST 30",
+        "Ticker": "XU030"
+    },
+    {
+        "Endeks Adı": "BIST 500",
+        "Ticker": "XU500"
+    },
+    {
+        "Endeks Adı": "BIST LİKİT BANKA",
+        "Ticker": "XLBNK"
+    },
+    {
+        "Endeks Adı": "BIST BANKA DIŞI LİKİT 10",
+        "Ticker": "X10XB"
+    },
+    {
+        "Endeks Adı": "BIST TÜM",
+        "Ticker": "XUTUM"
+    },
+    {
+        "Endeks Adı": "BIST 100-30",
+        "Ticker": "XYUZO"
+    },
+    {
+        "Endeks Adı": "BIST TÜM-100",
+        "Ticker": "XTUMY"
+    },
+    {
+        "Endeks Adı": "BIST YILDIZ",
+        "Ticker": "XYLDZ"
+    },
+    {
+        "Endeks Adı": "BIST ANA",
+        "Ticker": "XBANA"
+    },
+    {
+        "Endeks Adı": "BIST HALKA ARZ",
+        "Ticker": "XHARZ"
+    },
+    {
+        "Endeks Adı": "BIST KOBI SANAYİ",
+        "Ticker": "XKOBI"
+    },
+    {
+        "Endeks Adı": "BIST TEMETTÜ",
+        "Ticker": "XTMTU"
+    },
+    {
+        "Endeks Adı": "BIST TEMETTÜ 25",
+        "Ticker": "XTM25"
+    },
+    {
+        "Endeks Adı": "BIST KURUMSAL YÖNETİM",
+        "Ticker": "XKURY"
+    },
+    {
+        "Endeks Adı": "BIST SÜRDÜRÜLEBİLİRLİK",
+        "Ticker": "XUSRD"
+    },
+    {
+        "Endeks Adı": "BIST SÜRDÜRÜLEBİLİRLİK 25",
+        "Ticker": "XSD25"
+    },
+    {
+        "Endeks Adı": "BIST SINAİ",
+        "Ticker": "XUSIN"
+    },
+    {
+        "Endeks Adı": "BIST GIDA, İÇECEK",
+        "Ticker": "XGIDA"
+    },
+    {
+        "Endeks Adı": "BIST KİMYA, PETROL, PLASTİK",
+        "Ticker": "XKMYA"
+    },
+    {
+        "Endeks Adı": "BIST MADENCİLİK",
+        "Ticker": "XMADN"
+    },
+    {
+        "Endeks Adı": "BIST METAL ANA",
+        "Ticker": "XMANA"
+    },
+    {
+        "Endeks Adı": "BIST METAL EŞYA, MAKİNA",
+        "Ticker": "XMESY"
+    },
+    {
+        "Endeks Adı": "BIST ORMAN, KAĞIT, BASIM",
+        "Ticker": "XKAGT"
+    },
+    {
+        "Endeks Adı": "BIST TAŞ, TOPRAK",
+        "Ticker": "XTAST"
+    },
+    {
+        "Endeks Adı": "BIST TEKSTİL, DERİ",
+        "Ticker": "XTEKS"
+    },
+    {
+        "Endeks Adı": "BIST HİZMETLER",
+        "Ticker": "XUHIZ"
+    },
+    {
+        "Endeks Adı": "BIST ELEKTRİK",
+        "Ticker": "XELKT"
+    },
+    {
+        "Endeks Adı": "BIST İLETİŞİM",
+        "Ticker": "XILTM"
+    },
+    {
+        "Endeks Adı": "BIST İNŞAAT",
+        "Ticker": "XINSA"
+    },
+    {
+        "Endeks Adı": "BIST SPOR",
+        "Ticker": "XSPOR"
+    },
+    {
+        "Endeks Adı": "BIST TİCARET",
+        "Ticker": "XTCRT"
+    },
+    {
+        "Endeks Adı": "BIST TURİZM",
+        "Ticker": "XTRZM"
+    },
+    {
+        "Endeks Adı": "BIST ULAŞTIRMA",
+        "Ticker": "XULAS"
+    },
+    {
+        "Endeks Adı": "BIST MALİ",
+        "Ticker": "XUMAL"
+    },
+    {
+        "Endeks Adı": "BIST BANKA",
+        "Ticker": "XBANK"
+    },
+    {
+        "Endeks Adı": "BIST SİGORTA",
+        "Ticker": "XSGRT"
+    },
+    {
+        "Endeks Adı": "BIST FİN. KİR. FAKTORİNG",
+        "Ticker": "XFINK"
+    },
+    {
+        "Endeks Adı": "BIST HOLDİNG VE YATIRIM",
+        "Ticker": "XHOLD"
+    },
+    {
+        "Endeks Adı": "BIST GAYRİMENKUL YAT. ORT.",
+        "Ticker": "XGMYO"
+    },
+    {
+        "Endeks Adı": "BIST ARACI KURUM",
+        "Ticker": "XAKUR"
+    },
+    {
+        "Endeks Adı": "BIST MENKUL KIYM Y.O.",
+        "Ticker": "XYORT"
+    },
+    {
+        "Endeks Adı": "BIST TEKNOLOJİ",
+        "Ticker": "XUTEK"
+    },
+    {
+        "Endeks Adı": "BIST BİLİŞİM",
+        "Ticker": "XBLSM"
+    },
+    {
+        "Endeks Adı": "BIST ADANA",
+        "Ticker": "XSADA"
+    },
+    {
+        "Endeks Adı": "BIST ANKARA",
+        "Ticker": "XSANK"
+    },
+    {
+        "Endeks Adı": "BIST ANTALYA",
+        "Ticker": "XSANT"
+    },
+    {
+        "Endeks Adı": "BIST AYDIN",
+        "Ticker": "XSAYD"
+    },
+    {
+        "Endeks Adı": "BIST BALIKESİR",
+        "Ticker": "XSBAL"
+    },
+    {
+        "Endeks Adı": "BIST BURSA",
+        "Ticker": "XSBUR"
+    },
+    {
+        "Endeks Adı": "BIST DENİZLİ",
+        "Ticker": "XSDNZ"
+    },
+    {
+        "Endeks Adı": "BIST İSTANBUL",
+        "Ticker": "XSIST"
+    },
+    {
+        "Endeks Adı": "BIST İZMİR",
+        "Ticker": "XSIZM"
+    },
+    {
+        "Endeks Adı": "BIST KAYSERİ",
+        "Ticker": "XSKAY"
+    },
+    {
+        "Endeks Adı": "BIST KOCAELİ",
+        "Ticker": "XSKOC"
+    },
+    {
+        "Endeks Adı": "BIST KONYA",
+        "Ticker": "XSKON"
+    },
+    {
+        "Endeks Adı": "BIST MANİSA",
+        "Ticker": "XSMNS"
+    },
+    {
+        "Endeks Adı": "BIST TEKİRDAĞ",
+        "Ticker": "XSTKR"
+    },
+    {
+        "Endeks Adı": "BIST KATILIM TUM",
+        "Ticker": "XKTUM"
+    },
+    {
+        "Endeks Adı": "BIST KATILIM 100",
+        "Ticker": "XK100"
+    },
+    {
+        "Endeks Adı": "BIST KATILIM 50",
+        "Ticker": "XK050"
+    },
+    {
+        "Endeks Adı": "BIST KATILIM 30",
+        "Ticker": "XK030"
+    },
+    {
+        "Endeks Adı": "BIST KATILIM TEMETTU",
+        "Ticker": "XKTMT"
+    },
+    {
+        "Endeks Adı": "BIST SÜRDÜRÜLEBİLİRLİK KATILIM",
+        "Ticker": "XSRDK"
+    },
+    {
+        "Endeks Adı": "BIST GERİ ALIM",
+        "Ticker": "XUGRA"
+    },
+    {
+        "Endeks Adı": "BIST TEMETTU 5 YIL",
+        "Ticker": "XT05Y"
+    },
+    {
+        "Endeks Adı": "BIST TEMETTU 10 YIL",
+        "Ticker": "XT10Y"
+    },
+    {
+        "Endeks Adı": "BIST TOPTAN TICARET",
+        "Ticker": "XTTIC"
+    },
+    {
+        "Endeks Adı": "BIST PERAKENDE TICARET",
+        "Ticker": "XPTIC"
+    },
+    {
+        "Endeks Adı": "BIST KONAKLAMA",
+        "Ticker": "XKNKL"
+    },
+    {
+        "Endeks Adı": "BIST YIYECEK VE ICECEK  HIZMETLERI",
+        "Ticker": "XYIHZ"
+    },
+    {
+        "Endeks Adı": "BIST GIRISIM SERMAYESI Y.O.",
+        "Ticker": "XGSYO"
+    }
+]
