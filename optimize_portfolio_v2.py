@@ -181,6 +181,7 @@ def fetch_and_calculate_financial_score(tickers):
     
     # Z-Score Normalization
     for col in metrics:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
         df[col] = df[col].replace([np.inf, -np.inf], np.nan)
         mean_val = df[col].mean()
         std_val = df[col].std()
@@ -216,6 +217,9 @@ def main():
     print("Historical matrix yükleniyor ve KNN modeli eğitiliyor...")
     hist_df = pd.read_csv(matrix_file)
     features = ['slope', 'r2', 'score']
+    
+    # NaN ve Infinity değerleri temizle
+    hist_df = hist_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features)
     
     scaler = StandardScaler()
     X_hist_scaled = scaler.fit_transform(hist_df[features])
@@ -269,6 +273,9 @@ def main():
             'score': discounts,
             'price': prices
         })
+        
+        # NaN ve Infinity değerleri temizle
+        today_df = today_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features + ['price'])
         
         today_df = today_df[(today_df['slope'] > 0) & (today_df['r2'] > 0.1) & (today_df['price'] > 0)]
         

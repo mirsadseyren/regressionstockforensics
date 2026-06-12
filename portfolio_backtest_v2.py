@@ -50,6 +50,9 @@ def fetch_and_calculate_financial_score(tickers):
     
     # Z-Score Normalization
     for col in metrics:
+        # yfinance bazen sayılar yerine "N/A" veya hatalı stringler döndürebilir.
+        # Bu yüzden tüm sütunu zorla sayısala çevirip (hatalıları NaN yaparak) hesaplıyoruz.
+        df[col] = pd.to_numeric(df[col], errors='coerce')
         df[col] = df[col].replace([np.inf, -np.inf], np.nan)
         mean_val = df[col].mean()
         std_val = df[col].std()
@@ -75,13 +78,13 @@ def fetch_and_calculate_financial_score(tickers):
 
 def main():
     parser = argparse.ArgumentParser(description="Portfolio Backtest v2 using Finansal x Küme Güveni")
-    parser.add_argument('-n', '--num-stocks', type=int, default=1, help="Maksimum tutulacak hisse sayısı (default: 1)")
-    parser.add_argument('-s', '--stop-loss', type=float, default=0.06, help="Zarar kesme (Trailing Stop) yüzdesi (default: 0.09 = %%9)")
-    parser.add_argument('-d', '--hold-days', type=int, default=10, help="Maksimum elde tutma gün sayısı (default: 16)")
-    parser.add_argument('--min-conf', type=float, default=4.1, help="Minimum ML Confidence Score")
-    parser.add_argument('--max-conf', type=float, default=10.1, help="Maksimum ML Confidence Score")
-    parser.add_argument('--min-fin', type=float, default=0.0, help="Minimum Finansal Güven Skoru (Percentile 0-100)")
-    parser.add_argument('--max-fin', type=float, default=100.0, help="Maksimum Finansal Güven Skoru (Percentile 0-100)")
+    parser.add_argument('-n', '--num-stocks', type=int, default=3, help="Maksimum tutulacak hisse sayısı (default: 1)")
+    parser.add_argument('-s', '--stop-loss', type=float, default=0.093, help="Zarar kesme (Trailing Stop) yüzdesi (default: 0.09 = %%9)")
+    parser.add_argument('-d', '--hold-days', type=int, default=4, help="Maksimum elde tutma gün sayısı (default: 16)")
+    parser.add_argument('--min-conf', type=float, default=2.9, help="Minimum ML Confidence Score")
+    parser.add_argument('--max-conf', type=float, default=21.3, help="Maksimum ML Confidence Score")
+    parser.add_argument('--min-fin', type=float, default=3.4, help="Minimum Finansal Güven Skoru (Percentile 0-100)")
+    parser.add_argument('--max-fin', type=float, default=87.9, help="Maksimum Finansal Güven Skoru (Percentile 0-100)")
     
     args = parser.parse_args()
     
@@ -123,7 +126,7 @@ def main():
     if not tickers:
         return
         
-    all_data = load_data(tickers)
+    all_data = load_data(tickers, force_refresh=True)
     
     if isinstance(all_data.columns, pd.MultiIndex):
         try:

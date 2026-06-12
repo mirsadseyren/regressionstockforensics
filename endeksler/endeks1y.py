@@ -36,7 +36,7 @@ def parse_percentage(value):
     except ValueError:
         return None
 
-def leaderboard(leaders=5):
+def leaderboard(leaders=10):
     json_path = os.path.join(os.path.dirname(__file__), 'endeks_performans.json')
     try:
         with open(json_path, 'r', encoding='utf-8') as f:

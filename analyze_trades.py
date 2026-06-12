@@ -38,7 +38,7 @@ def main(all_data=None, show_plot_flag=None):
             return
             
         print(f"Loading data for {len(tickers)} tickers...")
-        all_data = load_data(tickers)
+        all_data = load_data(tickers, force_refresh=True)
         print("Data loaded successfully.")
     else:
         print("Data provided via function arguments.")
