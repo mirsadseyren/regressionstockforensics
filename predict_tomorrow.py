@@ -119,8 +119,8 @@ def main():
     today_df['exp_pl'] = expected_pl
     today_df['win_rate'] = win_rates
     
-    # Score them purely by Expected P/L to avoid penalizing "lottery" setups
-    today_df['confidence_score'] = today_df['exp_pl']
+    # Score them: (Win Rate / 100) * Expected P/L
+    today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
     
     # Filter out candidates with negative expected P/L or poor win rates
     best_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]

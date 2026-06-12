@@ -645,7 +645,7 @@ with tab5:
                                     
                                 today_df['exp_pl'] = expected_pl
                                 today_df['win_rate'] = win_rates
-                                today_df['confidence_score'] = today_df['exp_pl']
+                                today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
                                 
                                 # --- FİNANSAL SKOR ENTEGRASYONU (Percentile Normalization) ---
                                 fin_dict = get_financial_scores(closes.columns.tolist())

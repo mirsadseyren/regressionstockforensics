@@ -283,7 +283,7 @@ def main():
             
             today_df['exp_pl'] = expected_pl
             today_df['win_rate'] = win_rates
-            today_df['confidence_score'] = today_df['exp_pl']
+            today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
             
             # --- FİNANSAL SKOR ENTEGRASYONU (Percentile Normalization) ---
             fin_scores = [financial_scores_dict.get(t, 0.0) for t in today_df.index]
