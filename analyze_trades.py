@@ -99,6 +99,9 @@ def main(all_data=None, show_plot_flag=None):
     print(f"\nCollected data for {len(df)} total potential trades!")
     
     # 3. Prepare Data for Clustering
+    # Clean NaN and inf values to prevent scaler crash
+    df = df.replace([np.inf, -np.inf], np.nan).dropna(subset=['slope', 'r2', 'score', 'pl_pct'])
+    
     # Features for clustering
     X = df[['slope', 'r2', 'score']].copy()
     
