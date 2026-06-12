@@ -104,6 +104,7 @@ def get_financial_scores(tickers):
     metrics = df.columns.tolist()
     
     for col in metrics:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
         df[col] = df[col].replace([np.inf, -np.inf], np.nan)
         mean_val = df[col].mean()
         std_val = df[col].std()
@@ -582,6 +583,9 @@ with tab5:
                         
                         # Özellikler ve Ölçeklendirme
                         features = ['slope', 'r2', 'score']
+                        
+                        hist_df = hist_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features)
+                        
                         scaler = StandardScaler()
                         X_hist_scaled = scaler.fit_transform(hist_df[features])
                         
@@ -620,6 +624,8 @@ with tab5:
                                 'score': discounts,
                                 'price': prices
                             })
+                            
+                            today_df = today_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features + ['price'])
                             
                             today_df = today_df[(today_df['slope'] > 0) & (today_df['r2'] > 0.1) & (today_df['price'] > 0)]
                             
