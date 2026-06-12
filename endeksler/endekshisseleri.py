@@ -258,5 +258,5 @@ def indices_performance():
 
 
 if __name__ == "__main__":
-    # indices_performance()
-    tickers_in_indices()
+    indices_performance()
+    # tickers_in_indices()

@@ -107,6 +107,9 @@ def main():
     hist_df = pd.read_csv(matrix_file)
     features = ['slope', 'r2', 'score']
     
+    # NaN ve Infinity değerleri temizle
+    hist_df = hist_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features)
+    
     scaler = StandardScaler()
     X_hist_scaled = scaler.fit_transform(hist_df[features])
     
@@ -221,6 +224,9 @@ def main():
                 'score': discounts,
                 'price': prices
             })
+            
+            # NaN ve Infinity değerleri temizle
+            today_df = today_df.replace([np.inf, -np.inf], np.nan).dropna(subset=features + ['price'])
             
             today_df = today_df[(today_df['slope'] > 0) & (today_df['r2'] > 0.1) & (today_df['price'] > 0)]
             active_tickers = [item['t'] for item in active_portfolio]
