@@ -71,61 +71,6 @@ def get_data(force=False):
     data = load_data(tickers, force_refresh=force)
     return data
 
-@st.cache_data(ttl=3600*12, show_spinner="Yfinance finansal verileri çekiliyor (İlk sefere mahsus 1-2 dk sürebilir)...")
-def get_financial_scores(tickers):
-    import yfinance as yf
-    import time
-    financial_data = []
-    valid_tickers = [t for t in tickers if isinstance(t, str) and t.endswith('.IS')]
-    
-    for ticker in valid_tickers:
-        try:
-            stock = yf.Ticker(ticker)
-            info = stock.info
-            data = {
-                'Ticker': ticker,
-                'PD/DD (Price to Book)': info.get('priceToBook', np.nan),
-                'FD/FAVÖK (EV/EBITDA)': info.get('enterpriseToEbitda', np.nan),
-                'F/K (Trailing PE)': info.get('trailingPE', np.nan),
-                'FAVÖK Marjı (EBITDA Margin)': info.get('ebitdaMargins', np.nan),
-                'ROE': info.get('returnOnEquity', np.nan),
-                'ROA': info.get('returnOnAssets', np.nan),
-                'Ortalama Hacim (Avg Volume)': info.get('averageVolume', np.nan)
-            }
-            financial_data.append(data)
-            time.sleep(0.01)
-        except Exception:
-            pass
-            
-    if not financial_data:
-        return {}
-        
-    df = pd.DataFrame(financial_data).set_index('Ticker')
-    metrics = df.columns.tolist()
-    
-    for col in metrics:
-        df[col] = pd.to_numeric(df[col], errors='coerce')
-        df[col] = df[col].replace([np.inf, -np.inf], np.nan)
-        mean_val = df[col].mean()
-        std_val = df[col].std()
-        if std_val != 0 and not pd.isna(std_val):
-            df[col] = (df[col] - mean_val) / std_val
-            
-    weights = {
-        'PD/DD (Price to Book)': 0.86,
-        'FD/FAVÖK (EV/EBITDA)': -14.83,
-        'F/K (Trailing PE)': 0.63,
-        'FAVÖK Marjı (EBITDA Margin)': 1.50,
-        'ROE': -3.85,
-        'ROA': -2.26,
-        'Ortalama Hacim (Avg Volume)': 18.93
-    }
-    
-    df['Finansal Güven Skoru'] = 0.0
-    for metric in metrics:
-        df['Finansal Güven Skoru'] += df[metric].fillna(0) * weights.get(metric, 0.0)
-        
-    return df['Finansal Güven Skoru'].to_dict()
 
 # Yan menüye yenileme butonu
 if st.sidebar.button("🔄 Verileri Güncelle"):
@@ -560,16 +505,18 @@ with tab5:
         if not os.path.exists(matrix_file):
             st.warning("⚠️ historical_trade_metrics.csv bulunamadı! Lütfen yandaki butona tıklayarak matrisi oluşturun.")
         else:
-            # Tarih ve Filtre Seçimi
-            c1, c2, c3 = st.columns(3)
+            # Tarih ve Filtre Seçimi (The Golden Gate)
+            st.markdown("### 🌉 The Golden Gate Filtresi")
+            c1, c2, c3, c4 = st.columns(4)
             with c1:
                 ai_target_date = st.date_input("Tahmin Tarihi Seçin", value=last_available_date.date(), key="ai_target_date")
             with c2:
-                st_min_conf = st.number_input("Min ML Skoru", value=1.5, step=0.5)
-                st_max_conf = st.number_input("Max ML Skoru", value=21.2, step=0.5)
+                st_min_slope_gg = st.number_input("Min Regresyon Eğimi", value=0.0148, step=0.001, format="%.4f")
             with c3:
-                st_min_fin = st.number_input("Min Finansal Uyum (0-100)", value=0.2, step=5.0)
-                st_max_fin = st.number_input("Max Finansal Uyum (0-100)", value=60.2, step=5.0)
+                st_min_win_rate_gg = st.number_input("Min Kazanma İhtimali (%)", value=50.0, step=1.0)
+            with c4:
+                st_min_r2_gg = st.number_input("Min R2 Skoru", value=0.75, step=0.01)
+                st_max_r2_gg = st.number_input("Max R2 Skoru", value=0.86, step=0.01)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
@@ -653,18 +600,12 @@ with tab5:
                                 today_df['win_rate'] = win_rates
                                 today_df['confidence_score'] = (today_df['win_rate'] / 100) * today_df['exp_pl']
                                 
-                                # --- FİNANSAL SKOR ENTEGRASYONU (Percentile Normalization) ---
-                                fin_dict = get_financial_scores(closes.columns.tolist())
-                                fin_scores = [fin_dict.get(t, 0.0) for t in today_df.index]
-                                today_df['fin_skor_raw'] = fin_scores
-                                today_df['finansal_skor'] = today_df['fin_skor_raw'].rank(pct=True) * 100
-                                
-                                # Tavsiye Durumu Hesaplama
+                                # Tavsiye Durumu Hesaplama (The Golden Gate)
                                 today_df['Tavsiye'] = (
-                                    (today_df['confidence_score'] >= st_min_conf) &
-                                    (today_df['confidence_score'] <= st_max_conf) &
-                                    (today_df['finansal_skor'] >= st_min_fin) &
-                                    (today_df['finansal_skor'] <= st_max_fin)
+                                    (today_df['slope'] > st_min_slope_gg) &
+                                    (today_df['win_rate'] > st_min_win_rate_gg) &
+                                    (today_df['r2'] >= st_min_r2_gg) &
+                                    (today_df['r2'] <= st_max_r2_gg)
                                 )
                                 
                                 base_candidates = today_df[(today_df['exp_pl'] > 0) & (today_df['win_rate'] >= 50)]
@@ -697,7 +638,6 @@ with tab5:
                                         "Kazanma İhtimali (%)": round(row['win_rate'], 1),
                                         "Beklenen 7G Kâr (%)": round(row['exp_pl'], 2),
                                         "ML Güven Skoru": round(row['confidence_score'], 3),
-                                        "Finansal Uyum (0-100)": round(row['finansal_skor'], 1),
                                         "Eğim": round(row['slope'], 4),
                                         "R²": round(row['r2'], 2)
                                     }
