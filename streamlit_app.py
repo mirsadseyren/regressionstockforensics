@@ -513,10 +513,10 @@ with tab5:
             with c2:
                 st_min_slope_gg = st.number_input("Min Regresyon Eğimi", value=0.0148, step=0.001, format="%.4f")
             with c3:
-                st_min_win_rate_gg = st.number_input("Min Kazanma İhtimali (%)", value=50.0, step=1.0)
+                st_min_win_rate_gg = st.number_input("Min Kazanma İhtimali (%)", value=45.0, step=1.0)
             with c4:
-                st_min_r2_gg = st.number_input("Min R2 Skoru", value=0.75, step=0.01)
-                st_max_r2_gg = st.number_input("Max R2 Skoru", value=0.86, step=0.01)
+                st_min_r2_gg = st.number_input("Min R2 Skoru", value=0.70, step=0.01)
+                st_max_r2_gg = st.number_input("Max R2 Skoru", value=0.92, step=0.01)
             
             if st.button("🧠 Yapay Zeka Analizini Başlat", type="primary"):
                 with st.spinner("Geçmiş işlemler taranıyor ve yapay zeka eğitiliyor..."):
