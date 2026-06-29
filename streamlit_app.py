@@ -560,10 +560,9 @@ with tab5:
                             actual_pl_dict = {}
                             is_past_date = (idx != len(precalc['prices']) - 1)
                             if is_past_date:
-                                future_idx = idx + 15
-                                if future_idx < len(precalc['prices']):
-                                    future_prices = precalc['prices'].iloc[future_idx]
-                                    actual_pl_dict = ((future_prices - prices) / prices * 100).to_dict()
+                                future_idx = min(idx + 15, len(precalc['prices']) - 1)
+                                future_prices = precalc['prices'].iloc[future_idx]
+                                actual_pl_dict = ((future_prices - prices) / prices * 100).to_dict()
                             
                             today_df = pd.DataFrame({
                                 'slope': slopes,
